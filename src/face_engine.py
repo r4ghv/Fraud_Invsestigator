@@ -15,6 +15,11 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import numpy as np
 
+try:
+    cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+except Exception:
+    pass
+
 
 @dataclass
 class DetectedFace:
