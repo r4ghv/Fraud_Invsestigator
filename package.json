@@ -1,0 +1,17 @@
+{
+  "name": "face-id-blockchain-verification",
+  "version": "1.0.0",
+  "description": "Biometric face encoding, genuine reverse-image search social matching, and EVM blockchain tamper-evident attestation.",
+  "type": "module",
+  "scripts": {
+    "search": "bun scripts/reverse_search.js",
+    "compile": "python scripts/compile_contract.py",
+    "pipeline": "python scripts/run_pipeline.py",
+    "verify": "python scripts/verify_record.py"
+  },
+  "dependencies": {
+    "puppeteer-core": "^22.0.0"
+  },
+  "author": "r3ghav",
+  "license": "MIT"
+}

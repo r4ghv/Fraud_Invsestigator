@@ -1,0 +1,11 @@
+opencv-python-headless>=4.10.0
+onnxruntime>=1.18.0
+numpy>=1.26.0
+pillow>=10.0.0
+web3>=6.15.0
+eth-tester>=0.11.0b1
+py-evm>=0.10.1b1
+py-solc-x>=2.0.0
+requests>=2.31.0
+hexbytes>=1.0.0
+eth-account>=0.11.0

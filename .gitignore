@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# JavaScript / Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun.lockb
+bun.lock
+
+# Environment & Secrets
+.env
+.env.local
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporary run artifacts
+reverse_search_output.json
+reverse_search_female.json
+lens_response.html
+bing_response.html
+yandex_response.html
+test_face.jpg
+elon.jpg
+live_receipt.json
+sample_receipt.json
+attestation_receipt.json
+record_output.mp4
+test_record.mp4
