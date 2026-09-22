@@ -1,0 +1,38 @@
+# Versioned fraud policy — single source of truth.
+# Deterministic only. Changing this file changes agent behavior. No LLM override.
+version: 0.1.0
+
+risk_tiers:
+  low: {max_score: 30}
+  medium: {max_score: 70}
+  high: {max_score: 100}
+
+# risk_score = 0.5*bank_score + 0.5*graph_score (see risk_scorer.py), 0-100
+action_matrix:
+  # tier + pattern confidence -> NBA + approval
+  low:
+    default: {actions: [allow_transaction], approval: auto, sar: false}
+  medium:
+    default: {actions: [request_more_evidence, step_up_auth], approval: auto, sar: false}
+    high_confidence_pattern: {actions: [monitor_account, warn_customer, create_case], approval: analyst, sar: false}
+  high:
+    default: {actions: [block_transaction, create_case, escalate_analyst], approval: analyst, sar: false}
+    confirmed_fraud: {actions: [block_transaction, block_account, create_case, file_sar], approval: fraud_lead, sar: true}
+
+sar_triggers:
+  # deterministic, auditable. Amounts in USD.
+  confirmed_fraud_amount_gte: 2000
+  pattern_repeated_across_accounts_gte: 3
+
+evidence_policy:
+  # what the agent may request when uncertainty remains, in order
+  request_order: [step_up_auth, owner_validate_transaction, analyst_review]
+  max_rounds: 2
+  stop_when:
+    risk_tier_in: [low, high]
+    confidence_gte: 0.8
+
+approval_routes:
+  auto: {executor: agent, human_required: false}
+  analyst: {executor: agent_recommends, approver: fraud_analyst, human_required: true}
+  fraud_lead: {executor: agent_recommends, approver: fraud_lead, human_required: true}

@@ -1,0 +1,10 @@
+-- Deterministic fraud queries. Called via MCP; results fed to pattern_detectors.py.
+CREATE QUERY account_history(STRING acct) FOR GRAPH Fraud {
+  start = {Account.*};
+  txns = SELECT t FROM start:s -(MadeTxn)- :t WHERE s.id == acct;
+  PRINT txns;
+}
+CREATE QUERY device_sharing(STRING dev) FOR GRAPH Fraud {
+  accts = SELECT a FROM Device:d -(UsedDevice)- :a WHERE d.id == dev;
+  PRINT accts;
+}
