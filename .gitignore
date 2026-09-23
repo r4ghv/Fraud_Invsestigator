@@ -62,3 +62,4 @@ fraud_agent/data/transactions.csv
 fraud_agent/data/identity.csv
 fraud_agent/HHGOA_IEEE*.zip
 __pycache__/
+fraud_agent/data/transactions_graph.csv
