@@ -1,0 +1,128 @@
+{
+  "case_id": "HHG-004",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3414899",
+      "3417834",
+      "3418042",
+      "3418919"
+    ],
+    "first_suspicious_txn_id": "3414899",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "desktop | firefox 47.0"
+    ],
+    "exposure_usd": 235.47,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3583227 $128.33 online region , risk 0.5",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3583227"
+        ]
+      },
+      {
+        "claim": "Card window: 72 txns for C08106 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3414899",
+          "3417834",
+          "3418042",
+          "3418919"
+        ]
+      },
+      {
+        "claim": "Device profile 'desktop | firefox 47.0' shared with 5 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "C05031",
+          "C07518",
+          "C03095",
+          "C04248",
+          "C02222"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5564",
+      "CC-5556",
+      "CC-5541"
+    ],
+    "summary": "card_not_present_new_device fraud p=0.9; 72-txn window, device shared with 5 others; trigger customer_report.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: watch pending low-confidence alert"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denied"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2/3a: exposure>1000 or shared origin"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: shared device/region/ring"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C08106-K1 (customer C08106): card_not_present_new_device episode of 4 txns totaling $235.47 around 2016-12-29, flagged txn 3583227 ($128.33, online). Device profile 'desktop | firefox 47.0' shared with 5 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C08106",
+      "C08106-K1",
+      "C05031",
+      "C07518",
+      "C03095"
+    ],
+    "total_amount_usd": 235.47,
+    "activity_dates": [
+      "2016-12-29",
+      "2016-12-29"
+    ]
+  },
+  "stop_reason": "verification response settled the question",
+  "tool_calls": 12,
+  "tokens": 0,
+  "latency_s": 0.3
+}

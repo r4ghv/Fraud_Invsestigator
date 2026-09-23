@@ -1,0 +1,128 @@
+{
+  "case_id": "HHG-016",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3568791",
+      "3569366",
+      "3570589",
+      "3571514"
+    ],
+    "first_suspicious_txn_id": "3568791",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "desktop | Windows | edge 16.0"
+    ],
+    "exposure_usd": 209.04,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3534820 $59.67 online region , risk 0.5",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3534820"
+        ]
+      },
+      {
+        "claim": "Card window: 24 txns for C09988 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3568791",
+          "3569366",
+          "3570589",
+          "3571514"
+        ]
+      },
+      {
+        "claim": "Device profile 'desktop | Windows | edge 16.0' shared with 10 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "C11923",
+          "C11847",
+          "C05031",
+          "C07508",
+          "C09873"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5564",
+      "CC-5556",
+      "CC-5541"
+    ],
+    "summary": "card_not_present_new_device fraud p=0.9; 24-txn window, device shared with 10 others; trigger customer_report.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: watch pending low-confidence alert"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denied"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2/3a: exposure>1000 or shared origin"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: shared device/region/ring"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C09988-K1 (customer C09988): card_not_present_new_device episode of 4 txns totaling $209.04 around 2016-12-11, flagged txn 3534820 ($59.67, online). Device profile 'desktop | Windows | edge 16.0' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C09988",
+      "C09988-K1",
+      "C11923",
+      "C11847",
+      "C05031"
+    ],
+    "total_amount_usd": 209.04,
+    "activity_dates": [
+      "2016-12-11",
+      "2016-12-11"
+    ]
+  },
+  "stop_reason": "verification response settled the question",
+  "tool_calls": 48,
+  "tokens": 0,
+  "latency_s": 0.1
+}

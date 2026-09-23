@@ -56,3 +56,9 @@ sample_receipt.json
 attestation_receipt.json
 record_output.mp4
 test_record.mp4
+
+# HHGOA data (large, local only)
+fraud_agent/data/transactions.csv
+fraud_agent/data/identity.csv
+fraud_agent/HHGOA_IEEE*.zip
+__pycache__/

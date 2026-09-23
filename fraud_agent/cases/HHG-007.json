@@ -1,0 +1,100 @@
+{
+  "case_id": "HHG-007",
+  "case": {
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.79,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 0,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3514948 $111.92 in_person region 264.0, risk 0.87",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3514948"
+        ]
+      },
+      {
+        "claim": "Card window: 1206 txns for C09933 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3356926",
+          "3357004",
+          "3357184",
+          "3358442"
+        ]
+      },
+      {
+        "claim": "Device profile 'n/a' shared with 0 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5564",
+      "CC-5556",
+      "CC-5541"
+    ],
+    "summary": "card_not_present_new_device uncertain p=0.79; 1206-txn window, device shared with 0 others; trigger risk_score.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R5/R2: strong pattern signal"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: confirm before block"
+      },
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "strong card_not_present_new_device signal p=0.79"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: uncertain, exposed or conflicting"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": false,
+    "reason": "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
+  },
+  "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
+  "tool_calls": 21,
+  "tokens": 0,
+  "latency_s": 0.1
+}

@@ -1,57 +1,68 @@
-"""Deterministic policy engine. No LLM, no network, no randomness."""
+"""Deterministic R1-R10 policy engine. Inputs are numbers/strings, never LLM output."""
 from __future__ import annotations
 import yaml
 from pathlib import Path
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class Decision:
-    actions: list[str]
-    approval: str
-    sar_required: bool
-    tier: str
-    reason: str
 
 
 class PolicyEngine:
-    def __init__(self, policy_path: str | Path):
-        with open(policy_path) as f:
-            self.p = yaml.safe_load(f)
+    def __init__(self, path: str | Path):
+        self.p = yaml.safe_load(open(path))
 
-    def tier(self, score: float) -> str:
-        s = max(0.0, min(100.0, float(score)))
-        if s <= self.p["risk_tiers"]["low"]["max_score"]:
-            return "low"
-        if s <= self.p["risk_tiers"]["medium"]["max_score"]:
-            return "medium"
-        return "high"
+    def block_route(self, exposure: float) -> str:
+        return "L1" if exposure <= 2500 else "L2"
 
-    def decide(self, *, risk_score: float, pattern: str | None,
-               pattern_conf: float, confirmed_fraud: bool = False,
-               amount: float = 0.0, linked_accounts: int = 0) -> Decision:
-        t = self.tier(risk_score)
-        m = self.p["action_matrix"][t]
-        if confirmed_fraud or self._sar_trigger(amount, linked_accounts):
-            d = m.get("confirmed_fraud", m["default"])
-            return Decision(d["actions"], d["approval"], True, t,
-                            f"tier={t} sar_trigger amount={amount} linked={linked_accounts}")
-        if pattern and pattern_conf >= 0.8 and "high_confidence_pattern" in m:
-            d = m["high_confidence_pattern"]
-            return Decision(d["actions"], d["approval"], False, t,
-                            f"tier={t} pattern={pattern} conf={pattern_conf:.2f}")
-        d = m["default"]
-        return Decision(d["actions"], d["approval"], d.get("sar", False), t,
-                        f"tier={t} default")
+    def initial(self, prob: float, signals: int, pattern: str) -> list[dict]:
+        """Before evidence. R1: single weak signal -> verify/step-up, not block."""
+        if pattern == "card_testing":
+            return [
+                {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": "R5: testing sequence observed"},
+                {"action": "VERIFY_WITH_CUSTOMER", "route": "auto", "reason": "R1: confirm before blocking"},
+            ]
+        if prob < 0.70 and signals <= 1:
+            return [
+                {"action": "VERIFY_WITH_CUSTOMER", "route": "auto", "reason": "R1: single weak signal, verify before block"},
+                {"action": "STEP_UP_AUTH", "route": "auto", "reason": "R1: verify before block"},
+                {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30 / evidence requested"},
+            ]
+        if prob >= 0.70:
+            return [
+                {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": "R5/R2: strong pattern signal"},
+                {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30"},
+            ]
+        return [{"action": "MONITOR_CARD", "route": "auto", "reason": "R4: watch pending low-confidence alert"},
+                {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30"}]
 
-    def _sar_trigger(self, amount: float, linked: int) -> bool:
-        st = self.p["sar_triggers"]
-        return amount >= st["confirmed_fraud_amount_gte"] or \
-            linked >= st["pattern_repeated_across_accounts_gte"]
+    def after_denial(self, exposure: float, shared: bool) -> list[dict]:
+        acts = [{"action": "BLOCK_CARD", "route": self.block_route(exposure), "reason": "R2: customer denied"},
+                {"action": "CREATE_CASE", "route": "auto", "reason": "R2"}]
+        if exposure > 1000 or shared:
+            acts.append({"action": "FILE_REPORT", "route": "L2", "reason": "R2/3a: exposure>1000 or shared origin"})
+        if shared:
+            acts.append({"action": "MONITOR_CONNECTED_CARDS", "route": "auto", "reason": "R6: shared device/region/ring"})
+        return acts
 
-    def evidence_requests(self) -> list[str]:
-        return list(self.p["evidence_policy"]["request_order"])
+    def after_confirm(self) -> list[dict]:
+        return [{"action": "CLOSE_NO_FRAUD", "route": "auto", "reason": "R3: customer confirmed"}]
 
-    def should_stop(self, tier: str, confidence: float) -> bool:
-        ep = self.p["evidence_policy"]["stop_when"]
-        return tier in ep["risk_tier_in"] and confidence >= ep["confidence_gte"]
+    def sar_needed(self, verdict: str, exposure: float, shared: bool, undoc: bool, prob: float = 0.0) -> tuple[bool, str]:
+        if verdict == "legitimate":
+            return False, "no fraud -> no report"
+        if verdict == "uncertain" and not (exposure > 1000 or (shared and prob >= 0.5) or undoc):
+            return False, "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8"
+        if exposure > 1000:
+            return True, "3a: confirmed/strongly suspected + exposure>1000"
+        if shared and (verdict == "fraud" or prob >= 0.5):
+            return True, "3a/R6: linked to shared device/region/another fraud"
+        if undoc and verdict == "fraud":
+            return True, "R9/3a: coordinated or undocumented pattern"
+        if verdict == "uncertain":
+            return False, "3a: uncertain -> case only"
+        return False, "3a: case only, below report thresholds"
+
+    def should_stop(self, prob: float, nevidence: int, settled: bool) -> tuple[bool, str]:
+        s = self.p["rules"]["stop"]
+        if settled:
+            return True, "verification response settled the question"
+        if nevidence >= s["min_evidence"] and (prob >= s["high_gte"] or prob <= s["low_lte"]):
+            return True, f"probability {prob:.2f} with {nevidence} independent evidence pieces"
+        return False, "uncertain — gather controlled evidence per section 5"

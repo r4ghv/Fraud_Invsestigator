@@ -1,0 +1,88 @@
+{
+  "case_id": "HHG-012",
+  "case": {
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.69,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 0,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3553342 $30.91 in_person region 494.0, risk 0.55",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3553342"
+        ]
+      },
+      {
+        "claim": "Card window: 452 txns for C05876 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3543950",
+          "3545223"
+        ]
+      },
+      {
+        "claim": "Device profile 'n/a' shared with 0 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5564",
+      "CC-5556",
+      "CC-5541"
+    ],
+    "summary": "card_not_present_new_device uncertain p=0.69; 452-txn window, device shared with 0 others; trigger risk_score.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: watch pending low-confidence alert"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: watch pending low-confidence alert"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
+  },
+  "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
+  "tool_calls": 36,
+  "tokens": 0,
+  "latency_s": 0.1
+}

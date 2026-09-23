@@ -1,0 +1,122 @@
+{
+  "case_id": "HHG-015",
+  "case": {
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.76,
+    "pattern": "account_takeover",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "desktop | Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050"
+    ],
+    "exposure_usd": 0,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3464869 $599.94 online region 327.0, risk 0.77",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3464869"
+        ]
+      },
+      {
+        "claim": "Card window: 26 txns for C03042 in \u00b160d; pattern=account_takeover conf=0.75",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3563052",
+          "3563095",
+          "3579474",
+          "3579649"
+        ]
+      },
+      {
+        "claim": "Device profile 'desktop | Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050' shared with 7 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "C01155",
+          "C11227",
+          "C02881",
+          "C11413",
+          "C00681"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5563",
+      "CC-5562",
+      "CC-5559"
+    ],
+    "summary": "account_takeover uncertain p=0.76; 26-txn window, device shared with 7 others; trigger risk_score.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R5/R2: strong pattern signal"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: confirm before block"
+      },
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "strong account_takeover signal p=0.76"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: uncertain, exposed or conflicting"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "3a/R6: linked to shared device/region/another fraud"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C03042-K1 (customer C03042): account_takeover episode of 4 txns totaling $598.54 around 2016-11-17, flagged txn 3464869 ($599.94, online). Device profile 'desktop | Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050' shared with 7 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C03042",
+      "C03042-K1",
+      "C01155",
+      "C11227",
+      "C02881"
+    ],
+    "total_amount_usd": 598.54,
+    "activity_dates": [
+      "2016-11-17",
+      "2016-11-17"
+    ]
+  },
+  "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
+  "tool_calls": 45,
+  "tokens": 0,
+  "latency_s": 0.2
+}

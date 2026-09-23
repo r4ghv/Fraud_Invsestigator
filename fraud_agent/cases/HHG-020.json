@@ -1,0 +1,111 @@
+{
+  "case_id": "HHG-020",
+  "case": {
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.3,
+    "pattern": "none",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "desktop | Trident/7.0 | Windows 10 | ie 11.0 for desktop | 1920x1080"
+    ],
+    "exposure_usd": 0,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3509359 $125.08 online region 264.0, risk 0.52",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3509359"
+        ]
+      },
+      {
+        "claim": "Card window: 71 txns for C12265 in \u00b160d; pattern=none conf=0.1",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3509359"
+        ]
+      },
+      {
+        "claim": "Device profile 'desktop | Trident/7.0 | Windows 10 | ie 11.0 for desktop | 1920x1080' shared with 10 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "C11031",
+          "C08395",
+          "C05362",
+          "C09800",
+          "C11000"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5558",
+      "CC-5557",
+      "CC-5553"
+    ],
+    "summary": "none uncertain p=0.3; 71-txn window, device shared with 10 others; trigger risk_score.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Assumed no reply within 24h (R4) \u2014 no data provided"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: single weak signal, verify before block"
+      },
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: verify before block"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30 / evidence requested"
+      }
+    ],
+    "final": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: no reply, monitor pending"
+      },
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R4: no reply on pending auth"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: uncertain + conflicting/single signal"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": false,
+    "reason": "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
+  },
+  "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
+  "tool_calls": 60,
+  "tokens": 0,
+  "latency_s": 0.1
+}

@@ -1,53 +1,180 @@
-"""8-step agent orchestration. Deterministic except optional explanation rephrase."""
+"""Deterministic investigator. Produces HHGOA answer-format JSON. LLM use: zero (tokens=0)."""
 from __future__ import annotations
-import argparse, json
+import argparse, csv, json, time
 from pathlib import Path
+from .data_loader import Store
+from .pattern_detectors import card_testing, cnp_burst, cnp_new_device, out_of_region, account_takeover
 from .policy_engine import PolicyEngine
-from .pattern_detectors import velocity_burst, device_mismatch
-from .risk_scorer import combine
-from .next_best_action import recommend
-from .case_manager import CaseManager
-from .evidence_collector import get_account_history
-from .explainer import build
+from .retrieval import similar
 
 ROOT = Path(__file__).resolve().parents[1]
+PATTERN_LABELS = {"card_testing": "card_testing", "cnp": "card_not_present_fraud",
+                  "cnp_new": "card_not_present_new_device", "oor": "out_of_region_use",
+                  "ato": "account_takeover"}
 
 
-def investigate(trigger: dict, bank_score: float, txns: list[dict], device: dict) -> dict:
-    eng = PolicyEngine(ROOT / "policies" / "policy.yaml")
-    cm = CaseManager(ROOT / "outputs")
-    case = cm.create(trigger)
+def prob_from(signals: list[tuple[bool, float]], bank: float, deny: bool, confirm: bool) -> float:
+    if confirm:
+        return 0.05
+    if deny:
+        return 0.9
+    hits = [c for h, c in signals if h]
+    base = max(hits) if hits else 0.2
+    # bank score adjusts, never decides alone
+    p = 0.7 * base + 0.3 * bank
+    return round(min(0.95, max(0.05, p)), 2)
 
-    hist = get_account_history(trigger.get("account_id", "unknown"))
-    cm.add_evidence(case, hist)
 
-    sigs = [velocity_burst(txns),
-            device_mismatch({"device_id": device.get("id")}, set(device.get("known", [])))]
-    pattern = "velocity_burst" if sigs[0][0] else ("device_mismatch" if sigs[1][0] else None)
-    pconf = max(c for _, c in sigs)
-    risk, conf = combine(bank_score, sigs)
-    nba_before = recommend(eng, "before_evidence", risk, conf, pattern, pconf).to_dict()
+def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
+    t0 = time.time()
+    tid, cust = case_row["flagged_txn_id"], case_row["customer_id"]
+    trig = case_row["trigger_type"]
+    bank = float(case_row["risk_score"] or 0.5)
+    flag = store.flagged(tid)
+    window = store.card_window(cust, flag["ts"])
+    ident = {k: v for k, v in store._ident.items()}
+    prof = store.device_profile(tid)
 
-    # controlled evidence gathering (max 1 mock round for now)
-    nba_after = None
-    if not eng.should_stop(eng.tier(risk), conf):
-        # e.g. step_up_auth result simulated as no new risk
-        nba_after = recommend(eng, "after_evidence", risk, min(0.9, conf + 0.1),
-                              pattern, pconf).to_dict()
+    ct, cc, ci = card_testing(window)
+    import statistics
+    med = statistics.median([float(r["TransactionAmt"]) for r in window]) if window else 0
+    cb, bc, bi = cnp_burst(window, med)
+    cn, nc, ni = cnp_new_device(window, ident)
+    oo, oc, oi = out_of_region(window, flag)
+    at, ac, ai = account_takeover(window[-10:], ident)
+    sigs = [(ct, cc), (cb, bc), (cn, nc), (oo, oc), (at, ac)]
+    order = [(ct, cc, "card_testing", ci), (cn, nc, "card_not_present_new_device", ni),
+             (cb, bc, "card_not_present_fraud", bi), (oo, oc, "out_of_region_use", oi),
+             (at, ac, "account_takeover", ai)]
+    hits = [(c, l, i) for h, c, l, i in order if h]
+    pattern, pconf, aids = (hits[0][1], hits[0][0], hits[0][2]) if hits else ("none", 0.1, [])
+    # R7: disputed but matches own recurring pattern (same product, amount within 10% of median) -> not fraud
+    r7 = False
+    if trig == "customer_report" and pattern in ("none", "card_not_present_fraud") and window:
+        same_prod = [r for r in window if r.get("ProductCD") == flag.get("ProductCD")]
+        if len(same_prod) >= 3 and med > 0 and abs(float(flag["TransactionAmt"]) - med) / med < 0.10:
+            r7 = True
+            pattern, pconf, aids = "none", 0.2, []
+    # trip guard: 3+ days of in-person activity in flagged region -> trip, not clone
+    if pattern == "out_of_region_use":
+        days = {r["ts"][:10] for r in window if str(r.get("addr1")) == str(flag.get("addr1"))}
+        if len(days) >= 3:
+            pattern, pconf, aids = "none", 0.2, []
+    neighbors = store.device_neighbors(prof, cust)
+    shared = len(neighbors) > 0
 
-    expl = build(trigger, len(case["evidence"]), risk, conf, nba_before, nba_after,
-                 len(cm.similar(pattern)))
-    case = cm.record(case, nba_before, nba_after, expl)
-    return {"case": case, "nba_before": nba_before, "nba_after": nba_after,
-            "explanation": expl, "risk": risk, "confidence": conf, "pattern": pattern}
+    # evidence (deterministic claims)
+    ev = [
+        {"claim": f"Flagged txn {tid} ${flag['TransactionAmt']} {flag['channel']} region {flag.get('addr1')}, risk {bank}",
+         "source": "graph", "ref": "query:flagged_transaction", "entity_ids": [tid]},
+        {"claim": f"Card window: {len(window)} txns for {cust} in ±60d; pattern={pattern} conf={pconf}",
+         "source": "graph", "ref": "query:card_window", "entity_ids": aids[:6] or [tid]},
+        {"claim": f"Device profile '{prof or 'n/a'}' shared with {len(neighbors)} other customer(s)",
+         "source": "graph", "ref": "query:device_neighbors", "entity_ids": neighbors[:5]},
+    ]
+
+    # initial NBA (before evidence)
+    p0 = prob_from(sigs, bank, False, False)
+    initial = eng.initial(p0, len(hits), pattern)
+
+    # controlled evidence: customer_validation assumed from trigger
+    reqs, settled, deny, confirm = [], False, False, False
+    if r7:
+        reqs = [{"type": "customer_validation", "asked_after_step": 3,
+                 "assumed_response": "Assumed customer disputes but charge matches own recurring pattern (R7)"}]
+    elif trig == "customer_report":
+        reqs = [{"type": "customer_validation", "asked_after_step": 3,
+                 "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"}]
+        deny, settled = True, True
+    elif p0 < 0.70 and len(hits) <= 1:
+        reqs = [{"type": "customer_validation", "asked_after_step": 3,
+                 "assumed_response": "Assumed no reply within 24h (R4) — no data provided"}]
+
+    p1 = prob_from(sigs, bank, deny, confirm)
+    if r7:
+        p1 = 0.20
+        final = [{"action": "CREATE_CASE", "route": "auto", "reason": "R7: disputed recurring pattern"},
+                 {"action": "VERIFY_WITH_CUSTOMER", "route": "auto", "reason": "R7"},
+                 {"action": "WARN_CUSTOMER", "route": "auto", "reason": "R7: recurring charge reminder, do not block"}]
+        verdict, status = "legitimate", "closed_legitimate"
+        exposure = 0.0
+    elif deny:
+        final = eng.after_denial(sum(abs(float(store._txn.get(i, flag)['TransactionAmt'])) for i in (aids or [tid])), shared)
+        verdict, status = "fraud", "closed_fraud"
+    elif confirm:
+        final = eng.after_confirm()
+        verdict, status = "legitimate", "closed_legitimate"
+    elif p1 <= 0.15:
+        final = [{"action": "CLOSE_NO_FRAUD", "route": "auto", "reason": "stop: low probability"},
+                 {"action": "GENERATE_REPORT", "route": "auto", "reason": "internal record"}]
+        verdict, status = "legitimate", "closed_legitimate"
+    elif p1 >= 0.70 and hits:
+        final = eng.after_denial(sum(abs(float(store._txn.get(i, flag)['TransactionAmt'])) for i in (aids or [tid])), shared) if deny else [
+            {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": f"strong {pattern} signal p={p1}"},
+            {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30"}]
+        if deny or p1 >= 0.85:
+            verdict, status = "fraud", "closed_fraud"
+        else:
+            verdict, status = "uncertain", "escalated"
+            final.append({"action": "ESCALATE_TO_ANALYST", "route": "auto", "reason": "R8: uncertain, exposed or conflicting"})
+            final.insert(0, {"action": "VERIFY_WITH_CUSTOMER", "route": "auto", "reason": "R1: confirm before block"})
+    else:
+        final = initial if not reqs else [
+            {"action": "MONITOR_CARD", "route": "auto", "reason": "R4: no reply, monitor pending"},
+            {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": "R4: no reply on pending auth"},
+            {"action": "ESCALATE_TO_ANALYST", "route": "auto", "reason": "R8: uncertain + conflicting/single signal"}]
+        verdict = "uncertain" if (reqs or p1 >= 0.30) else "legitimate"
+        status = "escalated" if verdict == "uncertain" else "closed_legitimate"
+
+    exposure = round(sum(abs(float(store._txn.get(i, flag)["TransactionAmt"])) for i in (aids or ([tid] if verdict == "fraud" else []))), 2)
+    undoc = pattern == "none" and verdict == "fraud"
+    need_sar, sar_why = eng.sar_needed(verdict, exposure, shared, undoc, p1)
+    has_file = any(a["action"] == "FILE_REPORT" for a in final)
+    if need_sar and not has_file:
+        final.append({"action": "FILE_REPORT", "route": "L2", "reason": sar_why})
+    if not need_sar:
+        final = [a for a in final if a["action"] != "FILE_REPORT"]
+
+    stop, stop_why = eng.should_stop(p1, len(ev), settled)
+    if not stop:
+        stop_why = "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision"
+        status = "escalated" if verdict == "uncertain" else status
+
+    mem = similar(pattern if pattern != "none" else "card_not_present_fraud")
+    sar = {"file": need_sar, "reason": sar_why,
+           "narrative": "" if not need_sar else
+           f"Card {case_row['card_id']} (customer {cust}): {pattern} episode of {len(aids or [tid])} txns totaling ${exposure} around {flag['ts'][:10]}, flagged txn {tid} (${flag['TransactionAmt']}, {flag['channel']}). Device profile '{prof or 'n/a'}' shared with {len(neighbors)} other customer(s). Trigger: {trig}. Customer denial assumed from report; sequence inconsistent with history. Suspicious per {sar_why}.",
+           "subjects": ([cust, case_row["card_id"]] + neighbors[:3]) if need_sar else [],
+           "total_amount_usd": exposure if need_sar else 0,
+           "activity_dates": [flag["ts"][:10], flag["ts"][:10]] if need_sar else []}
+    return {
+        "case_id": case_row["case_id"],
+        "case": {"status": status, "verdict": verdict, "fraud_probability": p1, "pattern": pattern,
+                 "pattern_description": "" if pattern != "undocumented" else "Coordinated abuse not matching five known patterns.",
+                 "affected_txn_ids": aids if verdict == "fraud" else [], "first_suspicious_txn_id": (aids[0] if aids and verdict == "fraud" else ""),
+                 "connected_card_ids": [], "connected_device_profiles": [prof] if shared and prof else [],
+                 "exposure_usd": exposure if verdict == "fraud" else 0,
+                 "evidence": ev, "similar_prior_cases": mem,
+                 "summary": f"{pattern} {verdict} p={p1}; {len(window)}-txn window, device shared with {len(neighbors)} others; trigger {trig}.",
+                 "written_to_graph": False, "graph_case_id": ""},
+        "evidence_requests": reqs,
+        "next_best_actions": {"initial": initial, "final": final,
+            "what_changed": "nothing" if final == initial else "evidence assumption updated probability and actions per R2/R4/R8"},
+        "sar": sar, "stop_reason": stop_why, "tool_calls": store.calls, "tokens": 0,
+        "latency_s": round(time.time() - t0, 1)}
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--demo", action="store_true")
+    ap.add_argument("--cases", default="fraud_agent/data/case_pack.csv")
+    ap.add_argument("--out", default="fraud_agent/cases")
+    ap.add_argument("--limit", type=int, default=20)
     a = ap.parse_args()
-    trig = {"type": "risk_score", "account_id": "demo_acct"}
-    out = investigate(trig, 75.0, [{"timestamp": 0, "amount": 5}, {"timestamp": 10, "amount": 8},
-                                   {"timestamp": 20, "amount": 500}],
-                      {"id": "dev_new", "known": ["dev_old"]})
-    print(json.dumps(out, indent=2))
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    store, eng = Store(), PolicyEngine(ROOT / "policies" / "policy.yaml")
+    rows = list(csv.DictReader(open(a.cases)))[:a.limit]
+    for r in rows:
+        ans = investigate(r, store, eng)
+        (out / f"{r['case_id']}.json").write_text(json.dumps(ans, indent=2))
+        print(r["case_id"], ans["case"]["verdict"], ans["case"]["pattern"], ans["case"]["fraud_probability"], ans["next_best_actions"]["final"])

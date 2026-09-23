@@ -1,38 +1,31 @@
-# Versioned fraud policy — single source of truth.
-# Deterministic only. Changing this file changes agent behavior. No LLM override.
-version: 0.1.0
+# Fraud Policy v1.0 — deterministic source of truth (from HHGOA_IEEE README).
+# No LLM may override. Action/route identifiers must match spec exactly.
+version: 1.0.0
 
-risk_tiers:
-  low: {max_score: 30}
-  medium: {max_score: 70}
-  high: {max_score: 100}
+actions:
+  ALLOW_TRANSACTION: {route: auto}
+  DECLINE_TRANSACTION: {route: L1}
+  MONITOR_CARD: {route: auto}
+  MONITOR_CONNECTED_CARDS: {route: auto}
+  WARN_CUSTOMER: {route: auto}
+  VERIFY_WITH_CUSTOMER: {route: auto}
+  STEP_UP_AUTH: {route: auto}
+  BLOCK_CARD: {route_by_exposure: {lte_2500: L1, gt_2500: L2}}
+  BLOCK_ALL_CARDS: {route: L2}
+  GENERATE_REPORT: {route: auto}
+  CREATE_CASE: {route: auto}
+  FILE_REPORT: {route: L2}
+  ESCALATE_TO_ANALYST: {route: auto}
+  CLOSE_NO_FRAUD: {route: auto}
 
-# risk_score = 0.5*bank_score + 0.5*graph_score (see risk_scorer.py), 0-100
-action_matrix:
-  # tier + pattern confidence -> NBA + approval
-  low:
-    default: {actions: [allow_transaction], approval: auto, sar: false}
-  medium:
-    default: {actions: [request_more_evidence, step_up_auth], approval: auto, sar: false}
-    high_confidence_pattern: {actions: [monitor_account, warn_customer, create_case], approval: analyst, sar: false}
-  high:
-    default: {actions: [block_transaction, create_case, escalate_analyst], approval: analyst, sar: false}
-    confirmed_fraud: {actions: [block_transaction, block_account, create_case, file_sar], approval: fraud_lead, sar: true}
-
-sar_triggers:
-  # deterministic, auditable. Amounts in USD.
-  confirmed_fraud_amount_gte: 2000
-  pattern_repeated_across_accounts_gte: 3
-
-evidence_policy:
-  # what the agent may request when uncertainty remains, in order
-  request_order: [step_up_auth, owner_validate_transaction, analyst_review]
-  max_rounds: 2
-  stop_when:
-    risk_tier_in: [low, high]
-    confidence_gte: 0.8
-
-approval_routes:
-  auto: {executor: agent, human_required: false}
-  analyst: {executor: agent_recommends, approver: fraud_analyst, human_required: true}
-  fraud_lead: {executor: agent_recommends, approver: fraud_lead, human_required: true}
+rules:
+  R1_verify_before_block: {max_single_signal_prob: 0.70}
+  R2_customer_denies: {block: BLOCK_CARD, case: CREATE_CASE, report_if_exposure_gt: 1000.0}
+  R4_no_reply: {escalate_if_exposure_gt: 500.0}
+  R5_card_testing: {small_lt: 5.0, small_count_gte: 3, window_min: 60, block_if_cleared_gt: 100.0}
+  R6_shared_origin: {report: true}
+  R8_uncertain_escalate: {exposure_gt: 500.0}
+  R10_block_all: {min_confirmed_cards: 2}
+  case_open_threshold: 0.30
+  sar_exposure_gt: 1000.0
+  stop: {high_gte: 0.85, low_lte: 0.15, min_evidence: 2}

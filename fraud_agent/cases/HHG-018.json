@@ -1,0 +1,101 @@
+{
+  "case_id": "HHG-018",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3543650",
+      "3546062",
+      "3546516",
+      "3548781"
+    ],
+    "first_suspicious_txn_id": "3543650",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 529.94,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3491361 $39.08 in_person region 126.0, risk 0.5",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3491361"
+        ]
+      },
+      {
+        "claim": "Card window: 3535 txns for C02354 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3543650",
+          "3546062",
+          "3546516",
+          "3548781"
+        ]
+      },
+      {
+        "claim": "Device profile 'n/a' shared with 0 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5564",
+      "CC-5556",
+      "CC-5541"
+    ],
+    "summary": "card_not_present_new_device fraud p=0.9; 3535-txn window, device shared with 0 others; trigger customer_report.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: watch pending low-confidence alert"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denied"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": false,
+    "reason": "3a: case only, below report thresholds",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
+  },
+  "stop_reason": "verification response settled the question",
+  "tool_calls": 54,
+  "tokens": 0,
+  "latency_s": 0.6
+}

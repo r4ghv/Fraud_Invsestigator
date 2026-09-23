@@ -1,0 +1,128 @@
+{
+  "case_id": "HHG-011",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_testing",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3437252",
+      "3437327",
+      "3437330",
+      "3437333",
+      "3437344"
+    ],
+    "first_suspicious_txn_id": "3437252",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "mobile | SM-G610F Build/NRD90M | chrome 66.0 for android"
+    ],
+    "exposure_usd": 32.68,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3583368 $131.30 online region , risk 0.5",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3583368"
+        ]
+      },
+      {
+        "claim": "Card window: 2724 txns for C11923 in \u00b160d; pattern=card_testing conf=0.85",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3437252",
+          "3437327",
+          "3437330",
+          "3437333",
+          "3437344"
+        ]
+      },
+      {
+        "claim": "Device profile 'mobile | SM-G610F Build/NRD90M | chrome 66.0 for android' shared with 3 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "C05678",
+          "C05595",
+          "C03938"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5187",
+      "CC-4940",
+      "CC-4501"
+    ],
+    "summary": "card_testing fraud p=0.9; 2724-txn window, device shared with 3 others; trigger customer_report.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R5: testing sequence observed"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: confirm before blocking"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denied"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2/3a: exposure>1000 or shared origin"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: shared device/region/ring"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C11923-K2 (customer C11923): card_testing episode of 5 txns totaling $32.68 around 2016-12-29, flagged txn 3583368 ($131.30, online). Device profile 'mobile | SM-G610F Build/NRD90M | chrome 66.0 for android' shared with 3 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C11923",
+      "C11923-K2",
+      "C05678",
+      "C05595",
+      "C03938"
+    ],
+    "total_amount_usd": 32.68,
+    "activity_dates": [
+      "2016-12-29",
+      "2016-12-29"
+    ]
+  },
+  "stop_reason": "verification response settled the question",
+  "tool_calls": 33,
+  "tokens": 0,
+  "latency_s": 12.5
+}

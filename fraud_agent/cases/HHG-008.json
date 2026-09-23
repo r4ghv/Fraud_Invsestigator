@@ -1,0 +1,128 @@
+{
+  "case_id": "HHG-008",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3383119",
+      "3383538",
+      "3383619",
+      "3383694"
+    ],
+    "first_suspicious_txn_id": "3383119",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "desktop | chrome 66.0"
+    ],
+    "exposure_usd": 335.71,
+    "evidence": [
+      {
+        "claim": "Flagged txn 3558054 $55.68 online region , risk 0.5",
+        "source": "graph",
+        "ref": "query:flagged_transaction",
+        "entity_ids": [
+          "3558054"
+        ]
+      },
+      {
+        "claim": "Card window: 362 txns for C13171 in \u00b160d; pattern=card_not_present_new_device conf=0.65",
+        "source": "graph",
+        "ref": "query:card_window",
+        "entity_ids": [
+          "3383119",
+          "3383538",
+          "3383619",
+          "3383694"
+        ]
+      },
+      {
+        "claim": "Device profile 'desktop | chrome 66.0' shared with 10 other customer(s)",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "C11923",
+          "C07562",
+          "C05381",
+          "C06977",
+          "C07981"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5564",
+      "CC-5556",
+      "CC-5541"
+    ],
+    "summary": "card_not_present_new_device fraud p=0.9; 362-txn window, device shared with 10 others; trigger customer_report.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: watch pending low-confidence alert"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denied"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2/3a: exposure>1000 or shared origin"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: shared device/region/ring"
+      }
+    ],
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
+  },
+  "sar": {
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C13171-K2 (customer C13171): card_not_present_new_device episode of 4 txns totaling $335.71 around 2016-12-19, flagged txn 3558054 ($55.68, online). Device profile 'desktop | chrome 66.0' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C13171",
+      "C13171-K2",
+      "C11923",
+      "C07562",
+      "C05381"
+    ],
+    "total_amount_usd": 335.71,
+    "activity_dates": [
+      "2016-12-19",
+      "2016-12-19"
+    ]
+  },
+  "stop_reason": "verification response settled the question",
+  "tool_calls": 24,
+  "tokens": 0,
+  "latency_s": 1.1
+}
