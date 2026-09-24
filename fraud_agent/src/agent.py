@@ -32,16 +32,30 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     bank = float(case_row["risk_score"] or 0.5)
     flag = store.flagged(tid)
     window = store.card_window(cust, flag["ts"])
+    # H4: detectors see only rows up to the flagged txn (no look-ahead)
+    before = [r for r in window if r["ts"] <= flag["ts"]]
     ident = {k: v for k, v in store._ident.items()}
     prof = store.device_profile(tid)
 
-    ct, cc, ci = card_testing(window)
     import statistics
-    med = statistics.median([float(r["TransactionAmt"]) for r in window]) if window else 0
-    cb, bc, bi = cnp_burst(window, med)
-    cn, nc, ni = cnp_new_device(window, ident)
-    oo, oc, oi = out_of_region(window, flag)
-    at, ac, ai = account_takeover(window[-10:], ident)
+    hist = [r for r in before if r["TransactionID"] != tid]
+    med = statistics.median([float(r["TransactionAmt"]) for r in hist]) if hist else 0
+    ct, cc, ci = card_testing(before)
+    cb, bc, bi = cnp_burst(before, med)
+    cn, nc, ni = cnp_new_device(before, ident)
+    oo, oc, oi = out_of_region(before, flag)
+    # account_takeover: the 10 txns ending at the flagged txn
+    idx = next((i for i, r in enumerate(before) if r["TransactionID"] == tid), len(before) - 1)
+    at, ac, ai = account_takeover(before[max(0, idx - 9): idx + 1], ident)
+
+    # H4: a detector hit must include the flagged txn, otherwise it is ignored
+    def anchored(hit, ids):
+        return (hit, ids) if (hit and tid in ids) else (False, [])
+    ct, ci = anchored(ct, ci)
+    cb, bi = anchored(cb, bi)
+    cn, ni = anchored(cn, ni)
+    oo, oi = anchored(oo, oi)
+    at, ai = anchored(at, ai)
     sigs = [(ct, cc), (cb, bc), (cn, nc), (oo, oc), (at, ac)]
     order = [(ct, cc, "card_testing", ci), (cn, nc, "card_not_present_new_device", ni),
              (cb, bc, "card_not_present_fraud", bi), (oo, oc, "out_of_region_use", oi),
