@@ -7,6 +7,7 @@ from .data_loader import Store
 from .pattern_detectors import card_testing, cnp_burst, cnp_new_device, out_of_region, account_takeover
 from .policy_engine import PolicyEngine
 from .retrieval import similar
+from .validator import validate
 
 ROOT = Path(__file__).resolve().parents[1]
 PATTERN_LABELS = {"card_testing": "card_testing", "cnp": "card_not_present_fraud",
@@ -94,6 +95,9 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     sigs = [(h, c) for h, c, name, _ in order if h and name not in dropped]
     neighbors = store.device_neighbors(prof, cust)
     shared = len(neighbors) > 0
+    # H6: one exposure value, computed once — drives case, SAR, and BLOCK route
+    fraud_exposure = round(sum(abs(float(store._txn.get(i, flag)["TransactionAmt"]))
+                               for i in (aids or [tid])), 2)
 
     # evidence (deterministic claims)
     ev = [
@@ -129,10 +133,9 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
                  {"action": "VERIFY_WITH_CUSTOMER", "route": "auto", "reason": "R7"},
                  {"action": "WARN_CUSTOMER", "route": "auto", "reason": "R7: recurring charge reminder, do not block"}]
         verdict, status = "legitimate", "closed_legitimate"
-        exposure = 0.0
     elif deny:
-        final = eng.after_denial(sum(abs(float(store._txn.get(i, flag)['TransactionAmt'])) for i in (aids or [tid])), shared)
         verdict, status = "fraud", "closed_fraud"
+        final = eng.after_denial(fraud_exposure, shared)
     elif confirm:
         final = eng.after_confirm()
         verdict, status = "legitimate", "closed_legitimate"
@@ -141,7 +144,7 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
                  {"action": "GENERATE_REPORT", "route": "auto", "reason": "internal record"}]
         verdict, status = "legitimate", "closed_legitimate"
     elif p1 >= 0.70 and hits:
-        final = eng.after_denial(sum(abs(float(store._txn.get(i, flag)['TransactionAmt'])) for i in (aids or [tid])), shared) if deny else [
+        final = eng.after_denial(fraud_exposure, shared) if deny else [
             {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": f"strong {pattern} signal p={p1}"},
             {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30"}]
         if deny or p1 >= 0.85:
@@ -158,8 +161,10 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
         verdict = "uncertain" if (reqs or p1 >= 0.30) else "legitimate"
         status = "escalated" if verdict == "uncertain" else "closed_legitimate"
 
-    exposure = round(sum(abs(float(store._txn.get(i, flag)["TransactionAmt"])) for i in (aids or ([tid] if verdict == "fraud" else []))), 2)
-    undoc = pattern == "none" and verdict == "fraud"
+    affected = (aids or [tid]) if verdict == "fraud" else []
+    exposure = fraud_exposure if verdict == "fraud" else 0.0
+    # H7: only a recognised undocumented pattern triggers the R9 coordinated-abuse SAR
+    undoc = pattern == "undocumented"
     need_sar, sar_why = eng.sar_needed(verdict, exposure, shared, undoc, p1)
     has_file = any(a["action"] == "FILE_REPORT" for a in final)
     if need_sar and not has_file:
@@ -175,7 +180,7 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     mem = similar(pattern if pattern != "none" else "card_not_present_fraud")
     sar = {"file": need_sar, "reason": sar_why,
            "narrative": "" if not need_sar else
-           f"Card {case_row['card_id']} (customer {cust}): {pattern} episode of {len(aids or [tid])} txns totaling ${exposure} around {flag['ts'][:10]}, flagged txn {tid} (${flag['TransactionAmt']}, {flag['channel']}). Device profile '{prof or 'n/a'}' shared with {len(neighbors)} other customer(s). Trigger: {trig}. Customer denial assumed from report; sequence inconsistent with history. Suspicious per {sar_why}.",
+           f"Card {case_row['card_id']} (customer {cust}): {pattern} episode of {len(affected)} txns totaling ${exposure} around {flag['ts'][:10]}, flagged txn {tid} (${flag['TransactionAmt']}, {flag['channel']}). Device profile '{prof or 'n/a'}' shared with {len(neighbors)} other customer(s). Trigger: {trig}. Customer denial assumed from report; sequence inconsistent with history. Suspicious per {sar_why}.",
            "subjects": ([cust, case_row["card_id"]] + neighbors[:3]) if need_sar else [],
            "total_amount_usd": exposure if need_sar else 0,
            "activity_dates": [flag["ts"][:10], flag["ts"][:10]] if need_sar else []}
@@ -183,9 +188,9 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
         "case_id": case_row["case_id"],
         "case": {"status": status, "verdict": verdict, "fraud_probability": p1, "pattern": pattern,
                  "pattern_description": "" if pattern != "undocumented" else "Coordinated abuse not matching five known patterns.",
-                 "affected_txn_ids": aids if verdict == "fraud" else [], "first_suspicious_txn_id": (aids[0] if aids and verdict == "fraud" else ""),
+                 "affected_txn_ids": affected, "first_suspicious_txn_id": (affected[0] if affected else ""),
                  "connected_card_ids": [], "connected_device_profiles": [prof] if shared and prof else [],
-                 "exposure_usd": exposure if verdict == "fraud" else 0,
+                 "exposure_usd": exposure,
                  "evidence": ev, "similar_prior_cases": mem,
                  "summary": f"{pattern} {verdict} p={p1}; {len(window)}-txn window, device shared with {len(neighbors)} others; trigger {trig}.",
                  "written_to_graph": False, "graph_case_id": ""},
@@ -208,5 +213,8 @@ if __name__ == "__main__":
     rows = list(csv.DictReader(open(a.cases)))[:a.limit]
     for r in rows:
         ans = investigate(r, store, eng)
+        errs = validate(ans, eng.p, store)
+        if errs:
+            raise SystemExit(f"{r['case_id']} FAILED validation: " + "; ".join(errs))
         (out / f"{r['case_id']}.json").write_text(json.dumps(ans, indent=2))
         print(r["case_id"], ans["case"]["verdict"], ans["case"]["pattern"], ans["case"]["fraud_probability"], ans["next_best_actions"]["final"])

@@ -28,6 +28,8 @@ rules:
   R8_uncertain_escalate: {exposure_gt: 500.0}
   R10_block_all: {min_confirmed_cards: 2}
   trip_guard: {min_days: 3}
+  block_route: {l1_max: 2500.0}
+  strong_suspicion_prob: 0.5
   case_open_threshold: 0.30
   sar_exposure_gt: 1000.0
   stop: {high_gte: 0.85, low_lte: 0.15, min_evidence: 2}

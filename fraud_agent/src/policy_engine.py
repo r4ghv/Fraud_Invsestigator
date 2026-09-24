@@ -9,7 +9,7 @@ class PolicyEngine:
         self.p = yaml.safe_load(open(path))
 
     def block_route(self, exposure: float) -> str:
-        return "L1" if exposure <= 2500 else "L2"
+        return "L1" if exposure <= self.p["rules"]["block_route"]["l1_max"] else "L2"
 
     def initial(self, prob: float, signals: int, pattern: str) -> list[dict]:
         """Before evidence. R1: single weak signal -> verify/step-up, not block."""
