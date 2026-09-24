@@ -46,9 +46,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-4124",
-      "CC-4086",
-      "CC-3907"
+      "CC-3035",
+      "CC-2971",
+      "CC-2649"
     ],
     "summary": "undocumented fraud p=0.9; 72-txn window, device shared with 5 others; trigger customer_report.",
     "written_to_graph": false,
@@ -111,7 +111,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Customer C08106, card C08106-K1: flagged transaction 3583227 on 2016-12-29 for $128.33 online in billing region unknown. The review covered 1 transaction(s) between 2016-12-29 and 2016-12-29 totaling $128.33. The pattern is undocumented. 6 customers used device profile 'desktop | firefox 47.0' within 62 days; amounts $4.61-$138.89 across 72 transactions. The customer denied flagged txn 3583227, but the activity matches none of the five known patterns (no card-testing, CNP, new-device, regional, or takeover signature). Found by running all five detectors, then checking device-profile neighbors in the graph: C05031, C07518, C03095 share this device \u2014 coordinated abuse across customers. Device profile 'desktop | firefox 47.0' is shared with 5 other customer(s): C05031, C07518, C03095. Similar prior cases retrieved from graph memory: CC-4124, CC-4086, CC-3907. The cardholder denied making the flagged purchase, settling the verdict under R2. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: BLOCK_CARD, CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS, ESCALATE_TO_ANALYST.",
+    "narrative": "Customer C08106, card C08106-K1: flagged transaction 3583227 on 2016-12-29 for $128.33 online in billing region unknown. The review covered 1 transaction(s) between 2016-12-29 and 2016-12-29 totaling $128.33. The pattern is undocumented. 6 customers used device profile 'desktop | firefox 47.0' within 62 days; amounts $4.61-$138.89 across 72 transactions. The customer denied flagged txn 3583227, but the activity matches none of the five known patterns (no card-testing, CNP, new-device, regional, or takeover signature). Found by running all five detectors, then checking device-profile neighbors in the graph: C05031, C07518, C03095 share this device \u2014 coordinated abuse across customers. Device profile 'desktop | firefox 47.0' is shared with 5 other customer(s): C05031, C07518, C03095. Similar prior cases retrieved from graph memory: CC-3035, CC-2971, CC-2649. The cardholder denied making the flagged purchase, settling the verdict under R2. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: BLOCK_CARD, CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS, ESCALATE_TO_ANALYST.",
     "subjects": [
       "C08106",
       "C08106-K1",
@@ -126,7 +126,7 @@
     ]
   },
   "stop_reason": "verification response settled the question",
-  "tool_calls": 12,
+  "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.2
+  "latency_s": 0.0
 }

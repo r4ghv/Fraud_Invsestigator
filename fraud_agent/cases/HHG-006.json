@@ -52,9 +52,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5564",
-      "CC-5556",
-      "CC-5541"
+      "CC-0519",
+      "CC-0878",
+      "CC-3047"
     ],
     "summary": "card_not_present_new_device fraud p=0.9; 154-txn window, device shared with 10 others; trigger customer_report.",
     "written_to_graph": false,
@@ -107,7 +107,7 @@
   "sar": {
     "file": true,
     "reason": "3a: confirmed/strongly suspected + exposure>$1000",
-    "narrative": "Customer C07297, card C07297-K1: flagged transaction 3476682 on 2016-11-21 for $482.12 online in billing region 264.0. The review covered 4 transaction(s) between 2016-11-21 and 2016-11-21 totaling $1906.07. The pattern is card_not_present_new_device: a card-not-present burst from a device marked New for this account, sometimes behind a proxy. Device profile 'desktop | Trident/7.0 | Windows 7 | ie 11.0 for desktop | 1920x1080' is shared with 10 other customer(s): C12942, C06599, C04660. Similar prior cases retrieved from graph memory: CC-5564, CC-5556, CC-5541. The cardholder denied making the flagged purchase, settling the verdict under R2. It is suspicious because 3a: confirmed/strongly suspected + exposure>$1000. Recommended actions: BLOCK_CARD, CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS.",
+    "narrative": "Customer C07297, card C07297-K1: flagged transaction 3476682 on 2016-11-21 for $482.12 online in billing region 264.0. The review covered 4 transaction(s) between 2016-11-21 and 2016-11-21 totaling $1906.07. The pattern is card_not_present_new_device: a card-not-present burst from a device marked New for this account, sometimes behind a proxy. Device profile 'desktop | Trident/7.0 | Windows 7 | ie 11.0 for desktop | 1920x1080' is shared with 10 other customer(s): C12942, C06599, C04660. Similar prior cases retrieved from graph memory: CC-0519, CC-0878, CC-3047. The cardholder denied making the flagged purchase, settling the verdict under R2. It is suspicious because 3a: confirmed/strongly suspected + exposure>$1000. Recommended actions: BLOCK_CARD, CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS.",
     "subjects": [
       "C07297",
       "C07297-K1",
@@ -122,7 +122,7 @@
     ]
   },
   "stop_reason": "verification response settled the question",
-  "tool_calls": 18,
+  "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.1
+  "latency_s": 0.0
 }

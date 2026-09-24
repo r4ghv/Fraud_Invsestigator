@@ -6,7 +6,7 @@ Usage:
     python -m fraud_agent.src.load_tigergraph --status        # job status
 """
 from __future__ import annotations
-import argparse, os, re, sys, time
+import argparse, os, time
 from pathlib import Path
 import requests
 import pyTigerGraph as tg

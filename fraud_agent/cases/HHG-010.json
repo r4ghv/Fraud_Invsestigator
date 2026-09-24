@@ -47,9 +47,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5563",
-      "CC-5562",
-      "CC-5559"
+      "CC-2217",
+      "CC-2511",
+      "CC-3470"
     ],
     "summary": "account_takeover uncertain p=0.79; 12-txn window, device shared with 10 others; trigger risk_score.",
     "written_to_graph": false,
@@ -101,7 +101,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Customer C10434, card C10434-K1: flagged transaction 3506725 on 2016-12-02 for $1000.03 online in billing region 469.0. No customer transactions are yet confirmed as fraudulent; this report is filed on shared-origin grounds with the customer's case exposure at $0.00. The pattern is account_takeover: an abrupt shift in channel, amount, and region profile over the transactions leading up to the alert. Device profile 'desktop | Windows | Windows 10 | edge 16.0 | 1366x768' is shared with 10 other customer(s): C11485, C01982, C03019. Similar prior cases retrieved from graph memory: CC-5563, CC-5562, CC-5559. The alert came from the bank's model scoring the flagged transaction at 0.9; the score is a reason to look, not a verdict. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: VERIFY_WITH_CUSTOMER, DECLINE_TRANSACTION, CREATE_CASE, ESCALATE_TO_ANALYST, FILE_REPORT.",
+    "narrative": "Customer C10434, card C10434-K1: flagged transaction 3506725 on 2016-12-02 for $1000.03 online in billing region 469.0. No customer transactions are yet confirmed as fraudulent; this report is filed on shared-origin grounds with the customer's case exposure at $0.00. The pattern is account_takeover: an abrupt shift in channel, amount, and region profile over the transactions leading up to the alert. Device profile 'desktop | Windows | Windows 10 | edge 16.0 | 1366x768' is shared with 10 other customer(s): C11485, C01982, C03019. Similar prior cases retrieved from graph memory: CC-2217, CC-2511, CC-3470. The alert came from the bank's model scoring the flagged transaction at 0.9; the score is a reason to look, not a verdict. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: VERIFY_WITH_CUSTOMER, DECLINE_TRANSACTION, CREATE_CASE, ESCALATE_TO_ANALYST, FILE_REPORT.",
     "subjects": [
       "C10434",
       "C10434-K1",
@@ -116,7 +116,7 @@
     ]
   },
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
-  "tool_calls": 30,
+  "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.1
+  "latency_s": 0.0
 }

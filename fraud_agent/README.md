@@ -9,15 +9,13 @@ LLM is allowed ONLY for phrasing explanations, never for decisions.
 - `policies/` — versioned YAML, the only source of truth for actions
 - `src/policy_engine.py` — deterministic evaluator, no LLM calls
 - `src/pattern_detectors.py` — GSQL-backed graph pattern checks (pure functions)
-- `src/risk_scorer.py` — combines bank risk_score + graph signals
-- `src/next_best_action.py` — NBA before/after evidence + approval route
-- `src/case_manager.py` — case create/progress + prior-case memory
 - `src/evidence_collector.py` — TigerGraph MCP/GSQL interface (mock fallback)
 - `src/agent.py` — 8-step orchestration
 - `src/explainer.py` — template explanation, optional LLM rephrase
+- `src/validator.py` — answer-format validator (fail-loud before any write)
 - `src/tigergraph/` — schema + GSQL queries
 - `ui/` — analyst dashboard (to be added)
-- `outputs/` — per-case answer files for the 20 benchmark cases
+- `cases/` — per-case answer files for the 20 benchmark cases
 
 ## Quickstart (no dataset yet)
 ```bash

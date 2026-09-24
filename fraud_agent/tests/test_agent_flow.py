@@ -25,7 +25,6 @@ def txn(pid, when, amt, channel="online", addr1="225", product="W"):
 
 class StubStore(Store):
     """Store pre-loaded with synthetic rows; skips the 708 MB CSVs."""
-
     def __init__(self, txns, ident=None):
         super().__init__()
         self._txn = {t["TransactionID"]: t for t in txns}
@@ -35,6 +34,7 @@ class StubStore(Store):
         for v in self._cust.values():
             v.sort(key=lambda r: r["ts"])
         self._ident = ident or {}
+        self._build_profile_index()
         self._loaded = True
 
 
@@ -82,3 +82,13 @@ def test_h4_old_burst_not_anchored_on_flag():
     assert ans["case"]["pattern"] == "none", (
         "H4: old burst fired without including the flagged txn"
     )
+
+
+def test_tool_calls_reset_per_case():
+    """M12: tool_calls counts one case, not the cumulative run total."""
+    store = StubStore([txn(100, BASE, 45, "in_person", "225")])
+    eng = PolicyEngine(POLICY)
+    n1 = investigate(case("100", "risk_score"), store, eng)["tool_calls"]
+    n2 = investigate(case("100", "risk_score"), store, eng)["tool_calls"]
+    assert n1 > 0
+    assert n2 == n1, f"M12: tool_calls accumulated ({n1} then {n2})"

@@ -1,6 +1,6 @@
 """Deterministic investigator. Produces HHGOA answer-format JSON. LLM use: zero (tokens=0)."""
 from __future__ import annotations
-import argparse, csv, json, time
+import argparse, csv, json, statistics, time
 from datetime import date
 from pathlib import Path
 from .data_loader import Store
@@ -10,9 +10,6 @@ from .retrieval import similar
 from .validator import validate
 
 ROOT = Path(__file__).resolve().parents[1]
-PATTERN_LABELS = {"card_testing": "card_testing", "cnp": "card_not_present_fraud",
-                  "cnp_new": "card_not_present_new_device", "oor": "out_of_region_use",
-                  "ato": "account_takeover"}
 # SAR "how" clause per pattern (README: who/what/when/where/how/why, 6-12 sentences)
 PATTERN_MECHANICS = {
     "card_testing": "three or more small online authorizations within an hour followed by a "
@@ -43,6 +40,7 @@ def prob_from(signals: list[tuple[bool, float]], bank: float, deny: bool, confir
 
 
 def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
+    store.calls = 0  # M12: tool_calls are per-case, not cumulative
     t0 = time.time()
     tid, cust = case_row["flagged_txn_id"], case_row["customer_id"]
     trig = case_row["trigger_type"]
@@ -51,10 +49,11 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     window = store.card_window(cust, flag["ts"])
     # H4: detectors see only rows up to the flagged txn (no look-ahead)
     before = [r for r in window if r["ts"] <= flag["ts"]]
-    ident = {k: v for k, v in store._ident.items()}
+    # M14: only window rows' identity records matter to detectors (not the full table)
+    ident = {r["TransactionID"]: store._ident[r["TransactionID"]]
+             for r in before if r["TransactionID"] in store._ident}
     prof = store.device_profile(tid)
 
-    import statistics
     hist = [r for r in before if r["TransactionID"] != tid]
     med = statistics.median([float(r["TransactionAmt"]) for r in hist]) if hist else 0
     ct, cc, ci = card_testing(before)
@@ -165,10 +164,10 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
                  {"action": "GENERATE_REPORT", "route": "auto", "reason": "internal record"}]
         verdict, status = "legitimate", "closed_legitimate"
     elif p1 >= r1_max and hits:
-        final = eng.after_denial(fraud_exposure, shared) if deny else [
+        final = [
             {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": f"strong {pattern} signal p={p1}"},
             {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30"}]
-        if deny or p1 >= high_gte:
+        if p1 >= high_gte:
             verdict, status = "fraud", "closed_fraud"
         else:
             verdict, status = "uncertain", "escalated"
@@ -230,7 +229,12 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
             has_esc = True
         status = "escalated" if has_esc else "open"
 
-    mem = similar(pattern if pattern != "none" else "card_not_present_fraud")
+    mem = similar(pattern if pattern != "none" else "card_not_present_fraud",
+                  flagged_notes=case_row.get("trigger_text", ""),
+                  amount=fraud_exposure,
+                  channel=str(flag.get("channel", "")),
+                  region=str(flag.get("addr1", "")),
+                  store=store)
     # SAR narrative: deterministic, 6-12 sentences, who/what/when/where/how/why
     narrative = ""
     if need_sar:

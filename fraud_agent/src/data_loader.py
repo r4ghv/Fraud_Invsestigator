@@ -34,6 +34,7 @@ class Store:
             pass
         for v in self._cust.values():
             v.sort(key=lambda r: r["ts"])
+        self._build_profile_index()
         self._loaded = True
 
     def flagged(self, tid: str) -> dict:
@@ -59,13 +60,19 @@ class Store:
         if not profile:
             return []
         out, seen = [], set()
+        for cust in self.by_profile.get(profile, ()):
+            if cust and cust != exclude_customer and cust not in seen:
+                seen.add(cust)
+                out.append(cust)
+            if len(out) >= 10:
+                break
+        return out
+
+    def _build_profile_index(self):
+        """M14: profile -> customers index, built once at load (not per case)."""
+        self.by_profile: dict[str, list[str]] = {}
         for tid, i in self._ident.items():
             p = " | ".join(str(i.get(k, "")) for k in IDENT_PROFILE if i.get(k))
-            if p == profile:
-                cust = self._txn.get(str(tid), {}).get("customer_id", "")
-                if cust and cust != exclude_customer and cust not in seen:
-                    seen.add(cust)
-                    out.append(cust)
-                if len(out) >= 10:
-                    break
-        return out
+            cust = self._txn.get(str(tid), {}).get("customer_id", "")
+            if p and cust:
+                self.by_profile.setdefault(p, []).append(cust)

@@ -38,9 +38,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5558",
-      "CC-5557",
-      "CC-5553"
+      "CC-3556",
+      "CC-3601",
+      "CC-3619"
     ],
     "summary": "none fraud p=0.9; 483-txn window, device shared with 0 others; trigger customer_report.",
     "written_to_graph": false,
@@ -94,7 +94,7 @@
     "activity_dates": []
   },
   "stop_reason": "verification response settled the question",
-  "tool_calls": 9,
+  "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.5
+  "latency_s": 0.0
 }

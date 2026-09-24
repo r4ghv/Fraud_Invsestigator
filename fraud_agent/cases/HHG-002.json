@@ -36,9 +36,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5558",
-      "CC-5557",
-      "CC-5553"
+      "CC-0146",
+      "CC-0161",
+      "CC-0262"
     ],
     "summary": "none uncertain p=0.38; 27-txn window, device shared with 0 others; trigger risk_score.",
     "written_to_graph": false,
@@ -92,7 +92,7 @@
     "activity_dates": []
   },
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
-  "tool_calls": 6,
+  "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.1
+  "latency_s": 0.0
 }

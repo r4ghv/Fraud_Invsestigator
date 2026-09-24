@@ -47,9 +47,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5563",
-      "CC-5562",
-      "CC-5559"
+      "CC-0293",
+      "CC-1329",
+      "CC-1693"
     ],
     "summary": "account_takeover uncertain p=0.67; 46-txn window, device shared with 10 others; trigger analyst_request.",
     "written_to_graph": false,
@@ -102,7 +102,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Customer C13487, card C13487-K1: flagged transaction 3478561 on 2016-11-22 for $74.96 online in billing region 191.0. No customer transactions are yet confirmed as fraudulent; this report is filed on shared-origin grounds with the customer's case exposure at $0.00. The pattern is account_takeover: an abrupt shift in channel, amount, and region profile over the transactions leading up to the alert. Device profile 'mobile | SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080' is shared with 10 other customer(s): C03744, C09354, C12033. Similar prior cases retrieved from graph memory: CC-5563, CC-5562, CC-5559. No customer reply arrived within 24 hours, so the pending authorization was declined and the card placed under monitoring per R4. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: MONITOR_CARD, DECLINE_TRANSACTION, FILE_REPORT.",
+    "narrative": "Customer C13487, card C13487-K1: flagged transaction 3478561 on 2016-11-22 for $74.96 online in billing region 191.0. No customer transactions are yet confirmed as fraudulent; this report is filed on shared-origin grounds with the customer's case exposure at $0.00. The pattern is account_takeover: an abrupt shift in channel, amount, and region profile over the transactions leading up to the alert. Device profile 'mobile | SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080' is shared with 10 other customer(s): C03744, C09354, C12033. Similar prior cases retrieved from graph memory: CC-0293, CC-1329, CC-1693. No customer reply arrived within 24 hours, so the pending authorization was declined and the card placed under monitoring per R4. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: MONITOR_CARD, DECLINE_TRANSACTION, FILE_REPORT.",
     "subjects": [
       "C13487",
       "C13487-K1",
@@ -117,7 +117,7 @@
     ]
   },
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
-  "tool_calls": 42,
+  "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.3
+  "latency_s": 0.0
 }
