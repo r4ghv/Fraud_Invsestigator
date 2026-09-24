@@ -165,6 +165,31 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
         verdict = "uncertain" if (reqs or p1 >= case_open) else "legitimate"
         status = "escalated" if verdict == "uncertain" else "closed_legitimate"
 
+    # R9/H7: confirmed fraud, no known pattern, shared device across customers
+    pattern_description = ""
+    r9 = pattern == "none" and verdict == "fraud" and shared
+    if r9:
+        pattern, pconf = "undocumented", 0.7
+        n = len(neighbors) + 1
+        dts = [date.fromisoformat(r["ts"][:10]) for r in window]
+        span = (max(dts) - min(dts)).days + 1
+        amts = [float(r["TransactionAmt"]) for r in window]
+        others = ", ".join(neighbors[:3])
+        pattern_description = (
+            f"{n} customers used device profile '{prof}' within {span} days; "
+            f"amounts ${min(amts):.2f}-${max(amts):.2f} across {len(window)} transactions. "
+            f"The customer denied flagged txn {tid}, but the activity matches none of the five "
+            f"known patterns (no card-testing, CNP, new-device, regional, or takeover signature). "
+            f"Found by running all five detectors, then checking device-profile neighbors in the "
+            f"graph: {others} share this device — coordinated abuse across customers.")
+        if not any(a["action"] == "CREATE_CASE" for a in final):
+            final.append({"action": "CREATE_CASE", "route": "auto",
+                          "reason": "R9: case for undocumented pattern"})
+        if not any(a["action"] == "ESCALATE_TO_ANALYST" for a in final):
+            final.append({"action": "ESCALATE_TO_ANALYST", "route": "auto",
+                          "reason": "R9: coordinated undocumented pattern"})
+        status = "escalated"
+
     affected = (aids or [tid]) if verdict == "fraud" else []
     exposure = fraud_exposure if verdict == "fraud" else 0.0
     # H7: only a recognised undocumented pattern triggers the R9 coordinated-abuse SAR
@@ -200,7 +225,7 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     return {
         "case_id": case_row["case_id"],
         "case": {"status": status, "verdict": verdict, "fraud_probability": p1, "pattern": pattern,
-                 "pattern_description": "" if pattern != "undocumented" else "Coordinated abuse not matching five known patterns.",
+                 "pattern_description": pattern_description,
                  "affected_txn_ids": affected, "first_suspicious_txn_id": (affected[0] if affected else ""),
                  "connected_card_ids": [], "connected_device_profiles": [prof] if shared and prof else [],
                  "exposure_usd": exposure,

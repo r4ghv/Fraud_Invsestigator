@@ -1,6 +1,8 @@
 """Rule tests — spec finding H9: one test per policy rule R1..R10,
 asserting exact action lists and approval routes (README Section 3).
 """
+from datetime import timedelta
+
 from test_agent_flow import POLICY, PolicyEngine, StubStore, case, txn
 from test_agent_flow import BASE
 from test_answer_validator import cnp_burst_rows, h7_rows, r7_rows
@@ -115,6 +117,42 @@ def test_r9_undocumented_pattern_gets_report():
     # small known-pattern fraud without shared origin stays case-only
     assert ENG.sar_needed("fraud", 50, False, False, 0.9) == (
         False, "3a: case only, below report thresholds")
+
+
+def test_r9_agent_emits_undocumented_with_description_and_actions():
+    """Spec H7 acceptance: undocumented emitted from cross-customer device
+    evidence, with a real description and the exact R9 action set."""
+    from fraud_agent.src.validator import validate
+
+    rows = [
+        # denied episode, no known pattern (amounts close to history)
+        txn(1, BASE - timedelta(days=10), 30, "online", "225", "C"),
+        txn(2, BASE - timedelta(days=5), 30, "online", "225", "C"),
+        txn(3, BASE - timedelta(days=2), 31, "online", "225", "C"),
+        txn(100, BASE, 30, "online", "225", "C"),
+        # other customers on the identical device profile
+        txn(501, BASE - timedelta(days=4), 45, "online", "225", "C"),
+        txn(502, BASE - timedelta(days=1), 60, "online", "225", "C"),
+    ]
+    for t in rows:
+        t["customer_id"] = {"501": "C00002", "502": "C00003"}.get(
+            t["TransactionID"], t["customer_id"])
+    prof = {"DeviceType": "Android", "DeviceInfo": "SM-G892A Build/NRD90M"}
+    ident = {"100": dict(prof), "501": dict(prof), "502": dict(prof)}
+    # flagged customer rows also online with this identity
+    store = StubStore(rows, ident)
+    ans = investigate(case("100", "customer_report"), store, ENG)
+    c = ans["case"]
+    assert c["verdict"] == "fraud"
+    assert c["pattern"] == "undocumented"
+    assert c["pattern_description"].strip(), "undocumented requires a written description"
+    acts = pairs(ans["next_best_actions"]["final"])
+    assert ("CREATE_CASE", "auto") in acts
+    assert ("FILE_REPORT", "L2") in acts
+    assert ("ESCALATE_TO_ANALYST", "auto") in acts
+    assert ans["sar"]["file"] is True
+    assert ans["sar"]["narrative"]
+    assert validate(ans, ENG.p, store) == []
 
 
 def test_r10_block_all_requires_two_confirmed_cards():

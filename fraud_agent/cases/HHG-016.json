@@ -1,11 +1,11 @@
 {
   "case_id": "HHG-016",
   "case": {
-    "status": "closed_fraud",
+    "status": "escalated",
     "verdict": "fraud",
     "fraud_probability": 0.9,
-    "pattern": "none",
-    "pattern_description": "",
+    "pattern": "undocumented",
+    "pattern_description": "11 customers used device profile 'desktop | Windows | edge 16.0' within 72 days; amounts $6.98-$134.97 across 24 transactions. The customer denied flagged txn 3534820, but the activity matches none of the five known patterns (no card-testing, CNP, new-device, regional, or takeover signature). Found by running all five detectors, then checking device-profile neighbors in the graph: C11923, C11847, C05031 share this device \u2014 coordinated abuse across customers.",
     "affected_txn_ids": [
       "3534820"
     ],
@@ -46,11 +46,11 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5558",
-      "CC-5557",
-      "CC-5553"
+      "CC-4124",
+      "CC-4086",
+      "CC-3907"
     ],
-    "summary": "none fraud p=0.9; 24-txn window, device shared with 10 others; trigger customer_report.",
+    "summary": "undocumented fraud p=0.9; 24-txn window, device shared with 10 others; trigger customer_report.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
@@ -99,6 +99,11 @@
         "action": "MONITOR_CONNECTED_CARDS",
         "route": "auto",
         "reason": "R6: shared device/region/ring"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R9: coordinated undocumented pattern"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
@@ -106,7 +111,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Card C09988-K1 (customer C09988): none episode of 1 txns totaling $59.67 around 2016-12-11, flagged txn 3534820 ($59.67, online). Device profile 'desktop | Windows | edge 16.0' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "narrative": "Card C09988-K1 (customer C09988): undocumented episode of 1 txns totaling $59.67 around 2016-12-11, flagged txn 3534820 ($59.67, online). Device profile 'desktop | Windows | edge 16.0' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
     "subjects": [
       "C09988",
       "C09988-K1",

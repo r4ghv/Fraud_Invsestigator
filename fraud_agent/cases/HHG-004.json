@@ -1,11 +1,11 @@
 {
   "case_id": "HHG-004",
   "case": {
-    "status": "closed_fraud",
+    "status": "escalated",
     "verdict": "fraud",
     "fraud_probability": 0.9,
-    "pattern": "none",
-    "pattern_description": "",
+    "pattern": "undocumented",
+    "pattern_description": "6 customers used device profile 'desktop | firefox 47.0' within 62 days; amounts $4.61-$138.89 across 72 transactions. The customer denied flagged txn 3583227, but the activity matches none of the five known patterns (no card-testing, CNP, new-device, regional, or takeover signature). Found by running all five detectors, then checking device-profile neighbors in the graph: C05031, C07518, C03095 share this device \u2014 coordinated abuse across customers.",
     "affected_txn_ids": [
       "3583227"
     ],
@@ -46,11 +46,11 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5558",
-      "CC-5557",
-      "CC-5553"
+      "CC-4124",
+      "CC-4086",
+      "CC-3907"
     ],
-    "summary": "none fraud p=0.9; 72-txn window, device shared with 5 others; trigger customer_report.",
+    "summary": "undocumented fraud p=0.9; 72-txn window, device shared with 5 others; trigger customer_report.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
@@ -99,6 +99,11 @@
         "action": "MONITOR_CONNECTED_CARDS",
         "route": "auto",
         "reason": "R6: shared device/region/ring"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R9: coordinated undocumented pattern"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
@@ -106,7 +111,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Card C08106-K1 (customer C08106): none episode of 1 txns totaling $128.33 around 2016-12-29, flagged txn 3583227 ($128.33, online). Device profile 'desktop | firefox 47.0' shared with 5 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "narrative": "Card C08106-K1 (customer C08106): undocumented episode of 1 txns totaling $128.33 around 2016-12-29, flagged txn 3583227 ($128.33, online). Device profile 'desktop | firefox 47.0' shared with 5 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
     "subjects": [
       "C08106",
       "C08106-K1",

@@ -26,7 +26,7 @@ def txn(pid, when, amt, channel="online", addr1="225", product="W"):
 class StubStore(Store):
     """Store pre-loaded with synthetic rows; skips the 708 MB CSVs."""
 
-    def __init__(self, txns):
+    def __init__(self, txns, ident=None):
         super().__init__()
         self._txn = {t["TransactionID"]: t for t in txns}
         self._cust = {}
@@ -34,7 +34,7 @@ class StubStore(Store):
             self._cust.setdefault(t["customer_id"], []).append(t)
         for v in self._cust.values():
             v.sort(key=lambda r: r["ts"])
-        self._ident = {}
+        self._ident = ident or {}
         self._loaded = True
 
 
