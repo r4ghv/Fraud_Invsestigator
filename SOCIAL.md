@@ -8,7 +8,7 @@ Publish after the blog + demo video URLs exist, then paste the real links.
 Built a fraud investigation agent on @TigerGraphDB for the HHGOA challenge 🕵️
 590k txns in Savanna, GSQL traversals for evidence, policy-driven decisions
 (tokens: 0), every case written back to the graph as memory.
-Blog: <BLOG_URL>
+Blog: BLOG_URL=https://r4ghv.github.io/Fraud_Invsestigator/
 Demo (4 min): <VIDEO_URL>
 #TigerGraph #FraudDetection #AIagents
 ```
@@ -19,7 +19,7 @@ Variant B (shorter):
 Graph-first fraud agent on @TigerGraphDB: investigate → evidence → decide →
 explain → write the case back to the graph. 20/20 cases on Savanna,
 deterministic decisions, framework-free.
-<BLOG_URL> · demo: <VIDEO_URL>
+BLOG_URL=https://r4ghv.github.io/Fraud_Invsestigator/ · demo: <VIDEO_URL>
 ```
 
 ## LinkedIn
@@ -50,7 +50,7 @@ The fun part: when all five known detectors miss but the customer denies the cha
 the device is shared across customers, the agent coins an "undocumented" pattern with a
 quantitative description — 5 of the 8 fraud cases landed there.
 
-📖 Blog: <BLOG_URL>
+📖 Blog: BLOG_URL=https://r4ghv.github.io/Fraud_Invsestigator/
 🎬 4-min end-to-end demo: <VIDEO_URL>
 🐙 Code: https://github.com/r4ghv/Fraud_Invsestigator
 

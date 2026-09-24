@@ -1,6 +1,7 @@
 # How We Built a Policy-Driven Fraud Investigation Agent on TigerGraph (Framework-Free)
 
 > Submission for the TigerGraph HHGOA hackathon. Repo: https://github.com/r4ghv/Fraud_Invsestigator
+> Published: https://r4ghv.github.io/Fraud_Invsestigator/
 > Demo video: _[3–5 min end-to-end walkthrough — link]_ · Dashboard screenshots: `fraud_agent/ui/`
 
 ## What we built
