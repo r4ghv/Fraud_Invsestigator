@@ -10,7 +10,8 @@ from pathlib import Path
 from .load_tigergraph import env, connect
 
 GSQL = Path(__file__).resolve().parents[1] / "src" / "tigergraph"
-QUERIES = ["flagged_transaction", "card_window", "device_neighbors", "connected_ring"]
+QUERIES = ["flagged_transaction", "card_window", "device_neighbors", "connected_ring",
+           "ring_reach"]
 
 
 def install() -> None:

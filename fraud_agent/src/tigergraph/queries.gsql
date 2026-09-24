@@ -42,3 +42,20 @@ CREATE QUERY connected_ring(STRING card_id, DATETIME t, INT days) FOR GRAPH Frau
   ring_custs = SELECT cu FROM ring_cards:c -(OWNS)- Customer:cu;
   PRINT own, devs, ring_cards, ring_custs;
 }
+
+// 5. Graph algorithm: 4-layer BFS (shortest-hop reachability) from the flagged
+//    txn through the shared-origin route — each SELECT is one BFS frontier, so
+//    the layer a vertex lands in IS its hop distance:
+//      hop0 txn (0) -> device (1) -> other txns (2) -> their cards (3) ->
+//      their customers (4). Answers "how far is the nearest other customer"
+//      without a human walking the path; each vertex type sits in exactly one
+//      layer, and sets dedupe within a layer.
+CREATE QUERY ring_reach(STRING txn_id) FOR GRAPH Fraud {
+  Seed = {Txn.*};
+  hop0 = SELECT x FROM Seed:x WHERE x.id == txn_id;
+  hop1 = SELECT d FROM hop0:x -(FROM_DEVICE>)- DeviceProfile:d;
+  hop2 = SELECT y FROM hop1:d -(<FROM_DEVICE)- Txn:y WHERE y.id != txn_id;
+  hop3 = SELECT c FROM hop2:y -(<MADE)- Card:c;
+  hop4 = SELECT cu FROM hop3:c -(OWNS)- Customer:cu;
+  PRINT hop0, hop1, hop2, hop3, hop4;
+}

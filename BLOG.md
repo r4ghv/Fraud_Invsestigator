@@ -71,7 +71,7 @@ tools exposed under one protocol.
 
 **Graph-first evidence.** The loaded schema models the actual fraud domain: `Card —MADE→
 Txn —FROM_DEVICE→ DeviceProfile`, `Txn —BILLED_IN→ BillingRegion`, `ClosedCase —ON_CARD→
-Card`, `FraudCase —CASE_ON→ Card`. Four installed GSQL queries do the investigative work:
+Card`, `FraudCase —CASE_ON→ Card`. Five installed GSQL queries do the investigative work:
 
 - `flagged_transaction(txn_id)` — pull the alert's attributes from the graph,
 - `card_window(card_id, t, days)` — temporal traversal `Card → MADE → Txn` with a
@@ -83,6 +83,11 @@ Card`, `FraudCase —CASE_ON→ Card`. Four installed GSQL queries do the invest
   its devices → every other card on those devices → their customers). This is the
   relationship-analysis query that powers connected-card monitoring and the
   two-confirmed-cards gate.
+- `ring_reach(txn_id)` — a genuine BFS graph algorithm: seeded from the flagged
+  txn, each `SELECT` is one frontier, so the layer a vertex lands in *is* its
+  shortest-hop distance (txn → device → other txns → their cards → their customers).
+  It answers "how far is the nearest other customer on this origin" without a human
+  walking the path.
 
 Evidence claims in the answer files cite these queries by name and parameters
 (`ref: "query:device_neighbors(device_id=…)"`), and the dashboard fetches the
@@ -91,7 +96,7 @@ graph panel is never a mock.
 
 **GraphRAG, concretely.** Retrieval is three-context, not one:
 
-1. **graph evidence** — the four queries above, scoped to the case's card, device, and
+1. **graph evidence** — the five queries above, scoped to the case's card, device, and
    window (never a raw table dump),
 2. **prior-case memory** — `retrieval.similar()` scores historical `ClosedCase`
    vertices by pattern, amount closeness, channel, region, note overlap, and connected

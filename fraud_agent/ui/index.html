@@ -52,15 +52,32 @@
   .gline { stroke:var(--mut); stroke-width:1.5; marker-end:url(#arw); }
   .muted { color:var(--mut); } .mono { font-family:ui-monospace,monospace; font-size:12px; }
   #err { color:var(--red); font-size:12px; }
+  .tour-banner { background:#161f30; border:1px solid var(--blue); border-radius:8px; padding:12px 16px; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,0.5); }
+  .tour-top { display:flex; justify-content:space-between; align-items:center; }
+  .tour-title { font-weight:700; color:var(--blue); font-size:13px; text-transform:uppercase; letter-spacing:.6px; }
+  .tour-desc { font-size:13px; line-height:1.4; color:#f0f6fc; margin:5px 0 6px; }
+  .tour-script { font-size:12px; font-style:italic; color:var(--mut); background:#0d1117; padding:6px 10px; border-radius:4px; border-left:3px solid var(--green); margin-bottom:8px; }
+  .tour-controls { display:flex; gap:8px; align-items:center; }
+  .tour-btn { background:#21262d; border:1px solid var(--line); color:var(--txt); border-radius:4px; padding:3px 10px; font-size:12px; cursor:pointer; }
+  .tour-btn:hover { background:#30363d; }
+  .tour-btn.active { background:#238636; border-color:#2ea043; color:#fff; }
+  .tour-bar { flex:1; height:4px; background:#30363d; border-radius:2px; overflow:hidden; margin:0 8px; }
+  .tour-prog { height:100%; background:var(--blue); width:0%; transition:width 0.25s linear; }
 </style>
 </head>
 <body>
 <aside>
-  <h1>FRAUD INVESTIGATOR</h1>
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px 4px;">
+    <h1 style="font-size:15px; margin:0; padding:0; letter-spacing:.4px;">FRAUD INVESTIGATOR</h1>
+    <button id="tour-toggle" onclick="toggleTour()" class="tour-btn active" style="font-size:11px; padding:2px 8px;">▶ Tour</button>
+  </div>
   <div class="sub">20 benchmark cases &middot; TigerGraph Savanna &middot; deterministic decisions, tokens:0</div>
   <div id="list">loading…</div>
 </aside>
-<main id="detail"></main>
+<main id="detail">
+  <div id="tour-box"></div>
+  <div id="case-body"></div>
+</main>
 <script>
 const IDS = Array.from({length:20}, (_,i)=>`HHG-${String(i+1).padStart(3,"0")}`);
 const $ = s => document.querySelector(s);
@@ -137,7 +154,7 @@ function renderGraph(p){
     <defs><marker id="arw" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0,0 L8,4 L0,8 z" fill="#8b949e"/></marker></defs>${rowsHtml}</svg>
     <div class="muted" style="font-size:11.5px">fetched live via <span class="mono">/restpp/graph/Fraud/edges/…</span>
-    &nbsp;(queries: <span class="mono">flagged_transaction, card_window, device_neighbors, connected_ring</span>)</div>`;
+    &nbsp;(queries: <span class="mono">flagged_transaction, card_window, device_neighbors, connected_ring, ring_reach</span>)</div>`;
 }
 
 async function show(id){
@@ -146,7 +163,7 @@ async function show(id){
   const a = CASES[id]; if(!a) return;
   const c = a.case, nba = a.next_best_actions;
   const pct = Math.round(c.fraud_probability*100);
-  $("#detail").innerHTML = `
+  $("#case-body").innerHTML = `
     <h2 style="margin:0 0 2px">${id} — ${esc(c.verdict==="fraud"?"Confirmed fraud":c.verdict==="uncertain"?"Uncertain — escalated":"Legitimate")}</h2>
     <div class="chips">
       <span class="chip ${SC[c.status]||""}">status: ${esc(c.status)}</span>
@@ -187,7 +204,151 @@ async function show(id){
   fetch(`/api/graph/case/${id}`).then(r=>r.json()).then(renderGraph).catch(e=>{
     const box=$("#gbox"); if(box) box.innerHTML=`<span id="err">${esc(e)}</span>`;});
 }
-boot();
+
+const TOUR_STEPS = [
+  {
+    case_id: "HHG-004",
+    title: "1/5 · 20 Benchmark Cases & 3 Trigger Types",
+    desc: "20 benchmark cases evaluated against a 590,742-transaction graph in TigerGraph Savanna.",
+    script: "“Three trigger types, twenty benchmark cases, one graph of 590k transactions behind them.”",
+    scroll: 0,
+    sec: 9
+  },
+  {
+    case_id: "HHG-004",
+    title: "2/5 · Undocumented Pattern Discovered (R9)",
+    desc: "All five classical detectors missed; device-sharing graph traversal revealed 3 compromised cards on the same device profile.",
+    script: "“All five detectors missed; the device-sharing traversal didn't.”",
+    scroll: 110,
+    sec: 9
+  },
+  {
+    case_id: "HHG-004",
+    title: "3/5 · Policy-Driven Actions & Approval Routes",
+    desc: "R1–R10 policy rules compute deterministic actions before and after customer denial with strict approval routes (auto, L1, L2).",
+    script: "“Before: verify, step-up, open a case. After: block, file, monitor connected cards — all thresholds from policy.yaml, 0 LLM tokens.”",
+    scroll: 360,
+    sec: 10
+  },
+  {
+    case_id: "HHG-004",
+    title: "4/5 · Persisted Live to TigerGraph Savanna",
+    desc: "Case written back to graph as FraudCase vertex linked via CASE_ON edge to card. Live edges fetched via REST++.",
+    script: "“This case exists as a vertex on Savanna right now. Memory for the next investigation.”",
+    scroll: 720,
+    sec: 9
+  },
+  {
+    case_id: "HHG-009",
+    title: "5/5 · SAR Narrative Generation & Ring Detection",
+    desc: "High exposure ($1,000+) automatically fires FinCEN SAR filing. Strict 6–12 sentence narrative covering who/what/when/where/how/why.",
+    script: "“Fired by policy: exposure over threshold or shared origin. Route L2 with full compliance narrative.”",
+    scroll: 450,
+    sec: 10
+  }
+];
+
+let tourIdx = -1, tourTimer = null, tourPaused = false;
+
+function renderTour(){
+  const box = $("#tour-box");
+  if(!box) return;
+  if(tourIdx < 0){
+    box.innerHTML = "";
+    $("#tour-toggle").classList.remove("active");
+    $("#tour-toggle").innerText = "▶ Tour";
+    return;
+  }
+  $("#tour-toggle").classList.add("active");
+  $("#tour-toggle").innerText = "⏹ Exit";
+  const st = TOUR_STEPS[tourIdx];
+  box.innerHTML = `
+    <div class="tour-banner">
+      <div class="tour-top">
+        <span class="tour-title">🎥 Demo Walkthrough · ${st.title}</span>
+        <div style="font-size:11px; color:var(--mut);">Step ${tourIdx+1} of ${TOUR_STEPS.length}</div>
+      </div>
+      <div class="tour-desc">${st.desc}</div>
+      <div class="tour-script">${st.script}</div>
+      <div class="tour-controls">
+        <button class="tour-btn" onclick="prevTour()" ${tourIdx===0?'disabled':''}>◀ Prev</button>
+        <button class="tour-btn" onclick="toggleTourPause()">${tourPaused?'▶ Resume':'⏸ Pause'}</button>
+        <button class="tour-btn" onclick="nextTour()">${tourIdx===TOUR_STEPS.length-1?'Finish':'Next ▶'}</button>
+        <div class="tour-bar"><div id="tour-prog" class="tour-prog"></div></div>
+        <button class="tour-btn" onclick="stopTour()">✕ Close</button>
+      </div>
+    </div>`;
+}
+
+function runTourStep(idx){
+  if(idx < 0 || idx >= TOUR_STEPS.length){
+    stopTour();
+    return;
+  }
+  tourIdx = idx;
+  const st = TOUR_STEPS[tourIdx];
+  show(st.case_id);
+  setTimeout(()=>{
+    if(st.scroll === 0) $("#detail").scrollTop = 0;
+    else $("#detail").scrollTo({top: st.scroll, behavior: "smooth"});
+  }, 150);
+  renderTour();
+  startTourTicker();
+}
+
+function startTourTicker(){
+  clearInterval(tourTimer);
+  const total = TOUR_STEPS[tourIdx].sec;
+  let elapsed = 0;
+  tourTimer = setInterval(()=>{
+    if(tourPaused) return;
+    elapsed += 0.25;
+    const pct = Math.min(100, Math.round((elapsed / total) * 100));
+    const p = $("#tour-prog");
+    if(p) p.style.width = pct + "%";
+    if(elapsed >= total){
+      clearInterval(tourTimer);
+      if(tourIdx + 1 < TOUR_STEPS.length){
+        runTourStep(tourIdx + 1);
+      } else {
+        stopTour();
+      }
+    }
+  }, 250);
+}
+
+function toggleTourPause(){
+  tourPaused = !tourPaused;
+  renderTour();
+}
+
+function prevTour(){
+  if(tourIdx > 0) runTourStep(tourIdx - 1);
+}
+
+function nextTour(){
+  if(tourIdx + 1 < TOUR_STEPS.length) runTourStep(tourIdx + 1);
+  else stopTour();
+}
+
+function stopTour(){
+  clearInterval(tourTimer);
+  tourIdx = -1;
+  renderTour();
+}
+
+function toggleTour(){
+  if(tourIdx >= 0) stopTour();
+  else runTourStep(0);
+}
+
+async function bootWithTour(){
+  await boot();
+  if(new URLSearchParams(location.search).get("tour") === "1" || new URLSearchParams(location.search).get("demo") === "1"){
+    setTimeout(()=>runTourStep(0), 400);
+  }
+}
+bootWithTour();
 </script>
 </body>
 </html>

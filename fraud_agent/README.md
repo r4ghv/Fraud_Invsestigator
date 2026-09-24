@@ -50,13 +50,16 @@ fraud_agent.src.graph_queries --install`):
 - `device_neighbors(profile_id)` — reverse traversal to sharing customers
 - `connected_ring(card_id, t, days)` — multi-hop ring expansion (device-sharing
   relationship analysis behind connected-card monitoring)
+- `ring_reach(txn_id)` — 4-layer BFS graph algorithm: seeded from the flagged txn,
+  each SELECT is one frontier, so the layer a vertex lands in *is* its shortest-hop
+  distance (txn → device → other txns → cards → customers)
 
 Every case is written back as a `FraudCase` vertex + `CASE_ON → Card` edge — case
 memory that `src/retrieval.py` feeds into the next investigation.
 
 ## GraphRAG
 Evidence is retrieved as context, never as raw tables:
-1. **graph evidence** — the four queries above, scoped to the case,
+1. **graph evidence** — the five queries above, scoped to the case,
 2. **prior-case memory** — `retrieval.similar()` over historical closed cases,
 3. **documents** — `policy.yaml` rules and typology mechanics become the reason
    text on every recommended action.
