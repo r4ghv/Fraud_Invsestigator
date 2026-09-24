@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "tigergraph": {
+        "type": "local",
+        "command": [".venv/bin/tigergraph-mcp", "--env-file", "fraud_agent/mcp.env"],
+        "cwd": ".",
+        "timeout": {
+          "startup": 45000,
+          "catalog": 60000
+        }
+      }
+    }
+  }
+}
