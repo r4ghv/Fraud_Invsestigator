@@ -102,5 +102,5 @@
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 39,
   "tokens": 0,
-  "latency_s": 0.2
+  "latency_s": 0.3
 }

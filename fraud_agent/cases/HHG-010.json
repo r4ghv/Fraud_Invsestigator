@@ -101,7 +101,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Card C10434-K1 (customer C10434): account_takeover episode of 0 txns totaling $0.0 around 2016-12-02, flagged txn 3506725 ($1000.03, online). Device profile 'desktop | Windows | Windows 10 | edge 16.0 | 1366x768' shared with 10 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "narrative": "Customer C10434, card C10434-K1: flagged transaction 3506725 on 2016-12-02 for $1000.03 online in billing region 469.0. No customer transactions are yet confirmed as fraudulent; this report is filed on shared-origin grounds with the customer's case exposure at $0.00. The pattern is account_takeover: an abrupt shift in channel, amount, and region profile over the transactions leading up to the alert. Device profile 'desktop | Windows | Windows 10 | edge 16.0 | 1366x768' is shared with 10 other customer(s): C11485, C01982, C03019. Similar prior cases retrieved from graph memory: CC-5563, CC-5562, CC-5559. The alert came from the bank's model scoring the flagged transaction at 0.9; the score is a reason to look, not a verdict. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: VERIFY_WITH_CUSTOMER, DECLINE_TRANSACTION, CREATE_CASE, ESCALATE_TO_ANALYST, FILE_REPORT.",
     "subjects": [
       "C10434",
       "C10434-K1",

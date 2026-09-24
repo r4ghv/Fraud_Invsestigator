@@ -111,7 +111,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Card C13171-K2 (customer C13171): undocumented episode of 1 txns totaling $55.68 around 2016-12-19, flagged txn 3558054 ($55.68, online). Device profile 'desktop | chrome 66.0' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "narrative": "Customer C13171, card C13171-K2: flagged transaction 3558054 on 2016-12-19 for $55.68 online in billing region unknown. The review covered 1 transaction(s) between 2016-12-19 and 2016-12-19 totaling $55.68. The pattern is undocumented. 11 customers used device profile 'desktop | chrome 66.0' within 71 days; amounts $3.28-$407.32 across 362 transactions. The customer denied flagged txn 3558054, but the activity matches none of the five known patterns (no card-testing, CNP, new-device, regional, or takeover signature). Found by running all five detectors, then checking device-profile neighbors in the graph: C11923, C07562, C05381 share this device \u2014 coordinated abuse across customers. Device profile 'desktop | chrome 66.0' is shared with 10 other customer(s): C11923, C07562, C05381. Similar prior cases retrieved from graph memory: CC-4124, CC-4086, CC-3907. The cardholder denied making the flagged purchase, settling the verdict under R2. It is suspicious because 3a/R6: linked to shared device/region/another fraud. Recommended actions: BLOCK_CARD, CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS, ESCALATE_TO_ANALYST.",
     "subjects": [
       "C13171",
       "C13171-K2",
@@ -128,5 +128,5 @@
   "stop_reason": "verification response settled the question",
   "tool_calls": 24,
   "tokens": 0,
-  "latency_s": 0.2
+  "latency_s": 0.3
 }

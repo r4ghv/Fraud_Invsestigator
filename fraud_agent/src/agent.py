@@ -13,6 +13,21 @@ ROOT = Path(__file__).resolve().parents[1]
 PATTERN_LABELS = {"card_testing": "card_testing", "cnp": "card_not_present_fraud",
                   "cnp_new": "card_not_present_new_device", "oor": "out_of_region_use",
                   "ato": "account_takeover"}
+# SAR "how" clause per pattern (README: who/what/when/where/how/why, 6-12 sentences)
+PATTERN_MECHANICS = {
+    "card_testing": "three or more small online authorizations within an hour followed by a "
+                    "larger purchase, the signature of a stolen card being tested before use",
+    "card_not_present_fraud": "online purchases materially outside this card's transaction "
+                              "history, clustered in a short window",
+    "card_not_present_new_device": "a card-not-present burst from a device marked New for this "
+                                   "account, sometimes behind a proxy",
+    "out_of_region_use": "card use outside the home billing region while home-region activity "
+                         "did not continue",
+    "account_takeover": "an abrupt shift in channel, amount, and region profile over the "
+                        "transactions leading up to the alert",
+    "none": "no known pattern matched; the case rests on the customer's denial and the "
+            "exposure found in the graph",
+}
 
 
 def prob_from(signals: list[tuple[bool, float]], bank: float, deny: bool, confirm: bool) -> float:
@@ -216,9 +231,45 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
         status = "escalated" if has_esc else "open"
 
     mem = similar(pattern if pattern != "none" else "card_not_present_fraud")
+    # SAR narrative: deterministic, 6-12 sentences, who/what/when/where/how/why
+    narrative = ""
+    if need_sar:
+        dates_all = sorted({store._txn[i]["ts"][:10] for i in affected} or {flag["ts"][:10]})
+        mech = (pattern_description if pattern == "undocumented"
+                else PATTERN_MECHANICS.get(pattern, PATTERN_MECHANICS["none"]))
+        if trig == "customer_report":
+            resp = "The cardholder denied making the flagged purchase, settling the verdict under R2."
+        elif reqs:
+            resp = ("No customer reply arrived within 24 hours, so the pending authorization was "
+                    "declined and the card placed under monitoring per R4.")
+        else:
+            resp = (f"The alert came from the bank's model scoring the flagged transaction at "
+                    f"{bank}; the score is a reason to look, not a verdict.")
+        parts = [
+            f"Customer {cust}, card {case_row['card_id']}: flagged transaction {tid} on "
+            f"{flag['ts'][:10]} for ${flag['TransactionAmt']} {flag['channel']} in billing "
+            f"region {flag.get('addr1') or 'unknown'}.",
+            (f"The review covered {len(affected)} transaction(s) between {dates_all[0]} and "
+             f"{dates_all[-1]} totaling ${exposure:.2f}."
+             if affected else
+             "No customer transactions are yet confirmed as fraudulent; this report is filed on "
+             "shared-origin grounds with the customer's case exposure at $0.00."),
+            (f"The pattern is {pattern}: {mech}." if pattern != "undocumented"
+             else f"The pattern is undocumented. {mech}"),
+            (f"Device profile '{prof}' is shared with {len(neighbors)} other customer(s): "
+             f"{', '.join(neighbors[:3]) or 'none'}." if prof else
+             "No device profile is recorded for the flagged transaction."),
+        ]
+        if mem:
+            parts.append(f"Similar prior cases retrieved from graph memory: {', '.join(mem)}.")
+        parts += [
+            resp,
+            f"It is suspicious because {sar_why}.",
+            "Recommended actions: " + ", ".join(a["action"] for a in final) + ".",
+        ]
+        narrative = " ".join(parts)
     sar = {"file": need_sar, "reason": sar_why,
-           "narrative": "" if not need_sar else
-           f"Card {case_row['card_id']} (customer {cust}): {pattern} episode of {len(affected)} txns totaling ${exposure} around {flag['ts'][:10]}, flagged txn {tid} (${flag['TransactionAmt']}, {flag['channel']}). Device profile '{prof or 'n/a'}' shared with {len(neighbors)} other customer(s). Trigger: {trig}. Customer denial assumed from report; sequence inconsistent with history. Suspicious per {sar_why}.",
+           "narrative": narrative,
            "subjects": ([cust, case_row["card_id"]] + neighbors[:3]) if need_sar else [],
            "total_amount_usd": exposure if need_sar else 0,
            "activity_dates": [flag["ts"][:10], flag["ts"][:10]] if need_sar else []}
