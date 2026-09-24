@@ -56,7 +56,6 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     cn, ni = anchored(cn, ni)
     oo, oi = anchored(oo, oi)
     at, ai = anchored(at, ai)
-    sigs = [(ct, cc), (cb, bc), (cn, nc), (oo, oc), (at, ac)]
     order = [(ct, cc, "card_testing", ci), (cn, nc, "card_not_present_new_device", ni),
              (cb, bc, "card_not_present_fraud", bi), (oo, oc, "out_of_region_use", oi),
              (at, ac, "account_takeover", ai)]
@@ -70,10 +69,19 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
             r7 = True
             pattern, pconf, aids = "none", 0.2, []
     # trip guard: 3+ days of in-person activity in flagged region -> trip, not clone
+    trip = False
     if pattern == "out_of_region_use":
         days = {r["ts"][:10] for r in window if str(r.get("addr1")) == str(flag.get("addr1"))}
         if len(days) >= 3:
+            trip = True
             pattern, pconf, aids = "none", 0.2, []
+    # C2: guards DROP signals — probability only sees surviving signals
+    dropped = set()
+    if r7:
+        dropped = {name for _, _, name, _ in order}
+    if trip:
+        dropped.add("out_of_region_use")
+    sigs = [(h, c) for h, c, name, _ in order if h and name not in dropped]
     neighbors = store.device_neighbors(prof, cust)
     shared = len(neighbors) > 0
 
