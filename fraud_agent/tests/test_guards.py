@@ -29,3 +29,58 @@ def test_c2_trip_guard_drops_signal_from_probability():
     assert ans["case"]["fraud_probability"] == 0.32, (
         "C2: dropped out_of_region signal still drove the probability"
     )
+
+
+# --- C3: real R7 — same product, monthly rhythm, per-product median ----------
+
+def _r7_case():
+    return case("100", trigger="customer_report")
+
+
+def test_c3_r7_monthly_same_product_is_legitimate():
+    """Disputed charge matching a monthly same-product rhythm -> legitimate."""
+    from datetime import timedelta
+    rows = [
+        txn(1, BASE - timedelta(days=55), 20.0, "in_person", "225", product="W"),
+        txn(2, BASE - timedelta(days=30), 20.5, "in_person", "225", product="W"),
+        txn(3, BASE - timedelta(days=5), 19.5, "in_person", "225", product="W"),
+        # other-product charges that skew the overall window median to ~200
+        txn(4, BASE - timedelta(days=50), 200.0, "in_person", "225", product="C"),
+        txn(5, BASE - timedelta(days=40), 200.0, "in_person", "225", product="C"),
+        txn(6, BASE - timedelta(days=20), 200.0, "in_person", "225", product="C"),
+        txn(100, BASE, 20.0, "in_person", "225", product="W"),  # disputed
+    ]
+    ans = investigate(_r7_case(), StubStore(rows), PolicyEngine(POLICY))
+    assert ans["case"]["pattern"] == "none"
+    assert ans["case"]["verdict"] == "legitimate"
+    acts = [a["action"] for a in ans["next_best_actions"]["final"]]
+    assert acts == ["CREATE_CASE", "VERIFY_WITH_CUSTOMER", "WARN_CUSTOMER"]
+    assert not any(a.startswith("BLOCK") for a in acts), "R7 must never block"
+
+
+def test_c3_r7_requires_monthly_rhythm():
+    """Same product & amount but a clustered burst is NOT a recurring rhythm."""
+    from datetime import timedelta
+    rows = [
+        txn(1, BASE - timedelta(days=10), 20.0, "in_person", "225", product="W"),
+        txn(2, BASE - timedelta(days=5), 20.0, "in_person", "225", product="W"),
+        txn(3, BASE - timedelta(days=2), 20.0, "in_person", "225", product="W"),
+        txn(100, BASE, 20.0, "in_person", "225", product="W"),  # disputed
+    ]
+    ans = investigate(_r7_case(), StubStore(rows), PolicyEngine(POLICY))
+    # no rhythm -> R7 must not fire -> customer denial path -> fraud
+    assert ans["case"]["verdict"] == "fraud"
+    acts = [a["action"] for a in ans["next_best_actions"]["final"]]
+    assert "BLOCK_CARD" in acts
+
+
+def test_c3_low_signal_closes_legitimate():
+    """p <= stop.low after guards with a tiny bank score -> close, not escalate."""
+    rows = [txn(100, BASE, 45.0, "in_person", "225")]
+    c = case("100", trigger="risk_score")
+    c["risk_score"] = "0.03"
+    ans = investigate(c, StubStore(rows), PolicyEngine(POLICY))
+    assert ans["case"]["verdict"] == "legitimate"
+    assert ans["case"]["fraud_probability"] <= 0.15
+    acts = [a["action"] for a in ans["next_best_actions"]["final"]]
+    assert "CLOSE_NO_FRAUD" in acts and "ESCALATE_TO_ANALYST" not in acts

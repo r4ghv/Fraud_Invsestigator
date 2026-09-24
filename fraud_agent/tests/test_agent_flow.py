@@ -11,14 +11,14 @@ BASE = datetime(2016, 7, 1, 12, 0, 0)
 POLICY = Path(__file__).parents[1] / "policies" / "policy.yaml"
 
 
-def txn(pid, when, amt, channel="online", addr1="225"):
+def txn(pid, when, amt, channel="online", addr1="225", product="W"):
     return {
         "TransactionID": str(pid),
         "ts": when.strftime("%Y-%m-%d %H:%M:%S"),
         "TransactionAmt": str(amt),
         "channel": channel,
         "addr1": addr1,
-        "ProductCD": "W",
+        "ProductCD": product,
         "customer_id": "C00001",
     }
 

@@ -1,6 +1,7 @@
 """Deterministic investigator. Produces HHGOA answer-format JSON. LLM use: zero (tokens=0)."""
 from __future__ import annotations
 import argparse, csv, json, time
+from datetime import date
 from pathlib import Path
 from .data_loader import Store
 from .pattern_detectors import card_testing, cnp_burst, cnp_new_device, out_of_region, account_takeover
@@ -61,18 +62,27 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
              (at, ac, "account_takeover", ai)]
     hits = [(c, l, i) for h, c, l, i in order if h]
     pattern, pconf, aids = (hits[0][1], hits[0][0], hits[0][2]) if hits else ("none", 0.1, [])
-    # R7: disputed but matches own recurring pattern (same product, amount within 10% of median) -> not fraud
+    # R7: disputed charge matching own monthly same-product rhythm -> not fraud
     r7 = False
     if trig == "customer_report" and pattern in ("none", "card_not_present_fraud") and window:
-        same_prod = [r for r in window if r.get("ProductCD") == flag.get("ProductCD")]
-        if len(same_prod) >= 3 and med > 0 and abs(float(flag["TransactionAmt"]) - med) / med < 0.10:
-            r7 = True
+        r7_cfg = eng.p["rules"]["R7_disputed_recurring"]
+        same = [r for r in window
+                if r.get("ProductCD") == flag.get("ProductCD") and r["TransactionID"] != tid]
+        med_same = statistics.median([float(r["TransactionAmt"]) for r in same]) if same else 0
+        dts = sorted(date.fromisoformat(r["ts"][:10]) for r in same)
+        gaps = [(b - a).days for a, b in zip(dts, dts[1:])]
+        lo, hi = r7_cfg["gap_days"]
+        monthly = len(gaps) >= 2 and all(lo <= g <= hi for g in gaps)
+        amt = float(flag["TransactionAmt"])
+        r7 = (len(same) >= r7_cfg["min_same"] and monthly and med_same > 0
+              and abs(amt - med_same) / med_same < r7_cfg["amount_tol"])
+        if r7:
             pattern, pconf, aids = "none", 0.2, []
     # trip guard: 3+ days of in-person activity in flagged region -> trip, not clone
     trip = False
     if pattern == "out_of_region_use":
         days = {r["ts"][:10] for r in window if str(r.get("addr1")) == str(flag.get("addr1"))}
-        if len(days) >= 3:
+        if len(days) >= eng.p["rules"]["trip_guard"]["min_days"]:
             trip = True
             pattern, pconf, aids = "none", 0.2, []
     # C2: guards DROP signals — probability only sees surviving signals

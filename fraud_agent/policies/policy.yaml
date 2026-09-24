@@ -24,8 +24,10 @@ rules:
   R4_no_reply: {escalate_if_exposure_gt: 500.0}
   R5_card_testing: {small_lt: 5.0, small_count_gte: 3, window_min: 60, block_if_cleared_gt: 100.0}
   R6_shared_origin: {report: true}
+  R7_disputed_recurring: {min_same: 3, amount_tol: 0.10, gap_days: [25, 35]}
   R8_uncertain_escalate: {exposure_gt: 500.0}
   R10_block_all: {min_confirmed_cards: 2}
+  trip_guard: {min_days: 3}
   case_open_threshold: 0.30
   sar_exposure_gt: 1000.0
   stop: {high_gte: 0.85, low_lte: 0.15, min_evidence: 2}
