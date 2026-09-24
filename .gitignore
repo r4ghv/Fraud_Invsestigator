@@ -64,3 +64,4 @@ fraud_agent/HHGOA_IEEE*.zip
 __pycache__/
 fraud_agent/data/transactions_graph.csv
 fraud_agent/data/*.noheader.csv
+fraud_agent/data/chunks/

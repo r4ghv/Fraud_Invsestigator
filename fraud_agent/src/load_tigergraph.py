@@ -71,14 +71,23 @@ def install(conn: tg.TigerGraphConnection, run: bool = False, secret: str = "") 
     print("  installed load_fraud job (server-side files)")
     if not run:
         return
-    status = conn.runLoadingJob("load_fraud", {
-        "file": {
-            "txn_file": {"resolvedName": str(DATA / "transactions_graph.noheader.csv"), "tags": {}},
-            "ident_file": {"resolvedName": str(DATA / "identity.noheader.csv"), "tags": {}},
-            "cc_file": {"resolvedName": str(DATA / "closed_cases_history.noheader.csv"), "tags": {}},
-        }
-    })
-    print("  job submitted:", str(status)[:200])
+    # Body is a JSON array of job objects; data sources use filename + path.
+    payload = [{
+        "name": "load_fraud",
+        "dataSources": [
+            {"filename": "txn_file", "name": "file", "path": str(DATA / "transactions_graph.noheader.csv")},
+            {"filename": "ident_file", "name": "file", "path": str(DATA / "identity.noheader.csv")},
+            {"filename": "cc_file", "name": "file", "path": str(DATA / "closed_cases_history.noheader.csv")},
+        ],
+    }]
+    r = requests.post(f"{conn.gsUrl}/gsql/v1/loading-jobs/run?graph={conn.graphname}",
+                      json=payload,
+                      headers={"Authorization": f"GSQL-Secret {secret}",
+                               "Content-Type": "application/json"},
+                      timeout=300)
+    if r.status_code >= 400:
+        raise SystemExit(f"runLoadingJob [{r.status_code}]: {r.text[:400]}")
+    print("  job submitted:", r.json())
     wait_for_job(conn)
     print("  counts:", vertex_counts(conn))
 
