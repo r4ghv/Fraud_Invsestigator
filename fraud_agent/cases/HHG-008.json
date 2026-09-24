@@ -93,7 +93,7 @@
       {
         "action": "FILE_REPORT",
         "route": "L2",
-        "reason": "R2/3a: exposure>1000 or shared origin"
+        "reason": "R2/3a: exposure>$1000 or shared origin"
       },
       {
         "action": "MONITOR_CONNECTED_CARDS",

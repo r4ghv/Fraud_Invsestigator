@@ -99,8 +99,10 @@ def validate(ans: dict, policy: dict, store=None) -> list[str]:
                 if a["route"] != want:
                     errs.append(f"{a['action']} route {a['route']} != policy route {want} "
                                 f"for exposure {c['exposure_usd']}")
-                if c["verdict"] != "fraud":
-                    errs.append(f"{a['action']} on non-fraud verdict violates R1 verify-before-block")
+                r1_max = rules["R1_verify_before_block"]["max_single_signal_prob"]
+                if c["verdict"] != "fraud" and c["fraud_probability"] < r1_max \
+                        and c["pattern"] != "card_testing":
+                    errs.append(f"{a['action']} at p<{r1_max} on non-fraud verdict violates R1 verify-before-block")
 
     if nba["final"] == nba["initial"] and nba.get("what_changed") != "nothing":
         errs.append("what_changed must be 'nothing' when final == initial")

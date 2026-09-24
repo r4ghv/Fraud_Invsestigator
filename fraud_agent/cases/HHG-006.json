@@ -94,7 +94,7 @@
       {
         "action": "FILE_REPORT",
         "route": "L2",
-        "reason": "R2/3a: exposure>1000 or shared origin"
+        "reason": "R2/3a: exposure>$1000 or shared origin"
       },
       {
         "action": "MONITOR_CONNECTED_CARDS",
@@ -106,8 +106,8 @@
   },
   "sar": {
     "file": true,
-    "reason": "3a: confirmed/strongly suspected + exposure>1000",
-    "narrative": "Card C07297-K1 (customer C07297): card_not_present_new_device episode of 4 txns totaling $1906.07 around 2016-11-21, flagged txn 3476682 ($482.12, online). Device profile 'desktop | Trident/7.0 | Windows 7 | ie 11.0 for desktop | 1920x1080' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a: confirmed/strongly suspected + exposure>1000.",
+    "reason": "3a: confirmed/strongly suspected + exposure>$1000",
+    "narrative": "Card C07297-K1 (customer C07297): card_not_present_new_device episode of 4 txns totaling $1906.07 around 2016-11-21, flagged txn 3476682 ($482.12, online). Device profile 'desktop | Trident/7.0 | Windows 7 | ie 11.0 for desktop | 1920x1080' shared with 10 other customer(s). Trigger: customer_report. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a: confirmed/strongly suspected + exposure>$1000.",
     "subjects": [
       "C07297",
       "C07297-K1",

@@ -95,6 +95,11 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     sigs = [(h, c) for h, c, name, _ in order if h and name not in dropped]
     neighbors = store.device_neighbors(prof, cust)
     shared = len(neighbors) > 0
+    # H8: every decision threshold comes from policy.yaml
+    rules_cfg = eng.p["rules"]
+    r1_max = rules_cfg["R1_verify_before_block"]["max_single_signal_prob"]
+    low_lte, high_gte = rules_cfg["stop"]["low_lte"], rules_cfg["stop"]["high_gte"]
+    case_open = rules_cfg["case_open_threshold"]
     # H6: one exposure value, computed once — drives case, SAR, and BLOCK route
     fraud_exposure = round(sum(abs(float(store._txn.get(i, flag)["TransactionAmt"]))
                                for i in (aids or [tid])), 2)
@@ -109,9 +114,10 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
          "source": "graph", "ref": "query:device_neighbors", "entity_ids": neighbors[:5]},
     ]
 
-    # initial NBA (before evidence)
+    # initial NBA (before evidence); R5 needs the cleared purchase amount
     p0 = prob_from(sigs, bank, False, False)
-    initial = eng.initial(p0, len(hits), pattern)
+    cleared = max((float(store._txn[i]["TransactionAmt"]) for i in ci), default=0.0) if ct else 0.0
+    initial = eng.initial(p0, len(hits), pattern, cleared)
 
     # controlled evidence: customer_validation assumed from trigger
     reqs, settled, deny, confirm = [], False, False, False
@@ -122,7 +128,7 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
         reqs = [{"type": "customer_validation", "asked_after_step": 3,
                  "assumed_response": "Customer denies making the flagged purchase (per case_pack trigger)"}]
         deny, settled = True, True
-    elif p0 < 0.70 and len(hits) <= 1:
+    elif p0 < r1_max and len(hits) <= 1:
         reqs = [{"type": "customer_validation", "asked_after_step": 3,
                  "assumed_response": "Assumed no reply within 24h (R4) — no data provided"}]
 
@@ -139,26 +145,24 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     elif confirm:
         final = eng.after_confirm()
         verdict, status = "legitimate", "closed_legitimate"
-    elif p1 <= 0.15:
+    elif p1 <= low_lte:
         final = [{"action": "CLOSE_NO_FRAUD", "route": "auto", "reason": "stop: low probability"},
                  {"action": "GENERATE_REPORT", "route": "auto", "reason": "internal record"}]
         verdict, status = "legitimate", "closed_legitimate"
-    elif p1 >= 0.70 and hits:
+    elif p1 >= r1_max and hits:
         final = eng.after_denial(fraud_exposure, shared) if deny else [
             {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": f"strong {pattern} signal p={p1}"},
             {"action": "CREATE_CASE", "route": "auto", "reason": "3a: probability >= 0.30"}]
-        if deny or p1 >= 0.85:
+        if deny or p1 >= high_gte:
             verdict, status = "fraud", "closed_fraud"
         else:
             verdict, status = "uncertain", "escalated"
-            final.append({"action": "ESCALATE_TO_ANALYST", "route": "auto", "reason": "R8: uncertain, exposed or conflicting"})
+            if eng.r8_escalate(verdict, fraud_exposure, conflicts=True):
+                final.append({"action": "ESCALATE_TO_ANALYST", "route": "auto", "reason": "R8: uncertain, exposed or conflicting"})
             final.insert(0, {"action": "VERIFY_WITH_CUSTOMER", "route": "auto", "reason": "R1: confirm before block"})
     else:
-        final = initial if not reqs else [
-            {"action": "MONITOR_CARD", "route": "auto", "reason": "R4: no reply, monitor pending"},
-            {"action": "DECLINE_TRANSACTION", "route": "L1", "reason": "R4: no reply on pending auth"},
-            {"action": "ESCALATE_TO_ANALYST", "route": "auto", "reason": "R8: uncertain + conflicting/single signal"}]
-        verdict = "uncertain" if (reqs or p1 >= 0.30) else "legitimate"
+        final = initial if not reqs else eng.r4_no_reply(fraud_exposure)
+        verdict = "uncertain" if (reqs or p1 >= case_open) else "legitimate"
         status = "escalated" if verdict == "uncertain" else "closed_legitimate"
 
     affected = (aids or [tid]) if verdict == "fraud" else []
@@ -176,6 +180,15 @@ def investigate(case_row: dict, store: Store, eng: PolicyEngine) -> dict:
     if not stop:
         stop_why = "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision"
         status = "escalated" if verdict == "uncertain" else status
+
+    # R8: uncertain cases escalate when exposed or conflicting, else stay open
+    if verdict == "uncertain":
+        has_esc = any(a["action"] == "ESCALATE_TO_ANALYST" for a in final)
+        if not has_esc and eng.r8_escalate(verdict, fraud_exposure, conflicts=len(hits) > 1):
+            final.append({"action": "ESCALATE_TO_ANALYST", "route": "auto",
+                          "reason": "R8: uncertain and exposed or conflicting evidence"})
+            has_esc = True
+        status = "escalated" if has_esc else "open"
 
     mem = similar(pattern if pattern != "none" else "card_not_present_fraud")
     sar = {"file": need_sar, "reason": sar_why,

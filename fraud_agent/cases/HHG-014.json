@@ -1,7 +1,7 @@
 {
   "case_id": "HHG-014",
   "case": {
-    "status": "escalated",
+    "status": "open",
     "verdict": "uncertain",
     "fraud_probability": 0.67,
     "pattern": "account_takeover",
@@ -90,11 +90,6 @@
         "action": "DECLINE_TRANSACTION",
         "route": "L1",
         "reason": "R4: no reply on pending auth"
-      },
-      {
-        "action": "ESCALATE_TO_ANALYST",
-        "route": "auto",
-        "reason": "R8: uncertain + conflicting/single signal"
       },
       {
         "action": "FILE_REPORT",

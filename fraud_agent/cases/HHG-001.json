@@ -1,7 +1,7 @@
 {
   "case_id": "HHG-001",
   "case": {
-    "status": "escalated",
+    "status": "open",
     "verdict": "uncertain",
     "fraud_probability": 0.32,
     "pattern": "none",
@@ -79,11 +79,6 @@
         "action": "DECLINE_TRANSACTION",
         "route": "L1",
         "reason": "R4: no reply on pending auth"
-      },
-      {
-        "action": "ESCALATE_TO_ANALYST",
-        "route": "auto",
-        "reason": "R8: uncertain + conflicting/single signal"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
@@ -99,5 +94,5 @@
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 25.2
+  "latency_s": 25.3
 }
