@@ -1,10 +1,44 @@
--- Deterministic fraud queries. Called via MCP; results fed to pattern_detectors.py.
-CREATE QUERY account_history(STRING acct) FOR GRAPH Fraud {
-  start = {Account.*};
-  txns = SELECT t FROM start:s -(MadeTxn)- :t WHERE s.id == acct;
+// Investigation queries for graph Fraud. Vertex/edge names match schema.gsql
+// (Customer, Card, Txn, DeviceProfile, ClosedCase, FraudCase; OWNS, MADE,
+// FROM_DEVICE, BILLED_IN, INVOLVES, ON_CARD, CASE_ON).
+// Installed by: python -m fraud_agent.src.graph_queries --install
+// Evidence refs in answers use: query:<name>(params)
+
+// 1. Evidence claim 1: the flagged transaction's attributes.
+CREATE QUERY flagged_transaction(STRING txn_id) FOR GRAPH Fraud {
+  Start = {Txn.*};
+  t = SELECT x FROM Start:x WHERE x.id == txn_id;
+  PRINT t;
+}
+
+// 2. Evidence claim 2: card activity window (traversal Card -> MADE -> Txn).
+CREATE QUERY card_window(STRING card_id, DATETIME t, INT days) FOR GRAPH Fraud {
+  Start = {Card.*};
+  txns = SELECT x FROM Start:c -(MADE>)- Txn:x
+         WHERE c.id == card_id
+           AND abs(datetime_diff(x.ts, t)) <= days * 86400 + 0.0001;
   PRINT txns;
 }
-CREATE QUERY device_sharing(STRING dev) FOR GRAPH Fraud {
-  accts = SELECT a FROM Device:d -(UsedDevice)- :a WHERE d.id == dev;
-  PRINT accts;
+
+// 3. Evidence claim 3: customers sharing a device profile (shared origin).
+CREATE QUERY device_neighbors(STRING profile_id) FOR GRAPH Fraud {
+  Dev = {DeviceProfile.*};
+  txns = SELECT x FROM Dev:d -(<FROM_DEVICE)- Txn:x WHERE d.id == profile_id;
+  cards = SELECT c FROM txns:x -(<MADE)- Card:c;
+  custs = SELECT cu FROM cards:c -(OWNS)- Customer:cu;
+  PRINT txns, cards, custs;
+}
+
+// 4. Relationship analysis / ring expansion: cards and customers reachable
+//    through this card's device profiles (multi-hop graph traversal used for
+//    R6 monitoring and R10's two-confirmed-cards gate).
+CREATE QUERY connected_ring(STRING card_id, DATETIME t, INT days) FOR GRAPH Fraud {
+  Start = {Card.*};
+  own = SELECT x FROM Start:c -(MADE>)- Txn:x
+        WHERE c.id == card_id AND abs(datetime_diff(x.ts, t)) <= days * 86400 + 0.0001;
+  devs = SELECT d FROM own:x -(FROM_DEVICE>)- DeviceProfile:d;
+  ring_txns = SELECT x FROM devs:d -(<FROM_DEVICE)- Txn:x;
+  ring_cards = SELECT c FROM ring_txns:x -(<MADE)- Card:c WHERE c.id != card_id;
+  ring_custs = SELECT cu FROM ring_cards:c -(OWNS)- Customer:cu;
+  PRINT own, devs, ring_cards, ring_custs;
 }

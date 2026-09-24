@@ -43,8 +43,8 @@
       "CC-3619"
     ],
     "summary": "none fraud p=0.9; 483-txn window, device shared with 0 others; trigger customer_report.",
-    "written_to_graph": false,
-    "graph_case_id": ""
+    "written_to_graph": true,
+    "graph_case_id": "HHG-003"
   },
   "evidence_requests": [
     {

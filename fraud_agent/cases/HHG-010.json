@@ -52,8 +52,8 @@
       "CC-3470"
     ],
     "summary": "account_takeover uncertain p=0.79; 12-txn window, device shared with 10 others; trigger risk_score.",
-    "written_to_graph": false,
-    "graph_case_id": ""
+    "written_to_graph": true,
+    "graph_case_id": "HHG-010"
   },
   "evidence_requests": [],
   "next_best_actions": {
@@ -118,5 +118,5 @@
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.0
+  "latency_s": 0.1
 }

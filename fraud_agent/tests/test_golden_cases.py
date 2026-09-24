@@ -41,7 +41,8 @@ def test_golden_answer_valid(f):
     if ans["case"]["pattern"] == "undocumented":
         assert ans["case"]["pattern_description"].strip()
     # submission requirement: every answer carries the graph-write result
-    assert ans["case"]["written_to_graph"] in (True, False)
+    assert ans["case"]["written_to_graph"] is True
+    assert ans["case"]["graph_case_id"] == ans["case_id"]
 
 
 @pytest.mark.parametrize(

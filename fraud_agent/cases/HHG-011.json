@@ -49,8 +49,8 @@
       "CC-2649"
     ],
     "summary": "undocumented fraud p=0.9; 2724-txn window, device shared with 3 others; trigger customer_report.",
-    "written_to_graph": false,
-    "graph_case_id": ""
+    "written_to_graph": true,
+    "graph_case_id": "HHG-011"
   },
   "evidence_requests": [
     {
@@ -126,5 +126,5 @@
   "stop_reason": "verification response settled the question",
   "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.5
+  "latency_s": 1.2
 }

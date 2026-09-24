@@ -8,6 +8,8 @@ from .pattern_detectors import card_testing, cnp_burst, cnp_new_device, out_of_r
 from .policy_engine import PolicyEngine
 from .retrieval import similar
 from .validator import validate
+from .case_writer import write_case
+from .load_tigergraph import connect, env as tg_env
 
 ROOT = Path(__file__).resolve().parents[1]
 # SAR "how" clause per pattern (README: who/what/when/where/how/why, 6-12 sentences)
@@ -303,11 +305,26 @@ if __name__ == "__main__":
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     store, eng = Store(), PolicyEngine(ROOT / "policies" / "policy.yaml")
+    # graph connection is fail-loud: with creds present, every case MUST land on
+    # the graph or the run aborts (written_to_graph=true is never faked)
+    try:
+        gconn = connect(tg_env())
+        print("TigerGraph: connected — cases will be written to graph Fraud")
+    except KeyError:
+        gconn = None
+        print("WARN: no TIGERGRAPH_HOST in .env — written_to_graph stays false")
     rows = list(csv.DictReader(open(a.cases)))[:a.limit]
     for r in rows:
         ans = investigate(r, store, eng)
         errs = validate(ans, eng.p, store)
         if errs:
             raise SystemExit(f"{r['case_id']} FAILED validation: " + "; ".join(errs))
+        if gconn is not None:
+            gid = write_case(ans, r["card_id"], gconn)
+            ans["case"]["written_to_graph"] = True
+            ans["case"]["graph_case_id"] = gid
+            errs = validate(ans, eng.p, store)
+            if errs:
+                raise SystemExit(f"{r['case_id']} FAILED post-graph validation: " + "; ".join(errs))
         (out / f"{r['case_id']}.json").write_text(json.dumps(ans, indent=2))
         print(r["case_id"], ans["case"]["verdict"], ans["case"]["pattern"], ans["case"]["fraud_probability"], ans["next_best_actions"]["final"])

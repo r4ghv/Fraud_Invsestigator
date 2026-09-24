@@ -57,8 +57,8 @@
       "CC-3047"
     ],
     "summary": "card_not_present_new_device fraud p=0.9; 154-txn window, device shared with 10 others; trigger customer_report.",
-    "written_to_graph": false,
-    "graph_case_id": ""
+    "written_to_graph": true,
+    "graph_case_id": "HHG-006"
   },
   "evidence_requests": [
     {
@@ -124,5 +124,5 @@
   "stop_reason": "verification response settled the question",
   "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.0
+  "latency_s": 0.1
 }

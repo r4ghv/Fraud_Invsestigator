@@ -49,8 +49,8 @@
       "CC-0651"
     ],
     "summary": "none uncertain p=0.37; 705-txn window, device shared with 10 others; trigger risk_score.",
-    "written_to_graph": false,
-    "graph_case_id": ""
+    "written_to_graph": true,
+    "graph_case_id": "HHG-013"
   },
   "evidence_requests": [
     {
@@ -102,5 +102,5 @@
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 0.0
+  "latency_s": 0.1
 }

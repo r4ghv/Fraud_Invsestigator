@@ -108,4 +108,8 @@ def validate(ans: dict, policy: dict, store=None) -> list[str]:
         errs.append("what_changed must be 'nothing' when final == initial")
     if nba["final"] != nba["initial"] and nba.get("what_changed") == "nothing":
         errs.append("what_changed must explain the difference when final != initial")
+
+    # -- graph write honesty: a claimed graph write must carry its vertex id
+    if c.get("written_to_graph") is True and not c.get("graph_case_id"):
+        errs.append("graph_case_id required when written_to_graph=true")
     return errs
