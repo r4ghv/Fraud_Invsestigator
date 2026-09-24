@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "desktop | Windows | Windows 10 | edge 16.0 | 1366x768"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3506725 $1000.03 online region 469.0, risk 0.9",
@@ -27,10 +27,10 @@
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
+          "3419055",
+          "3475344",
           "3492086",
-          "3506725",
-          "3519858",
-          "3577244"
+          "3506725"
         ]
       },
       {
@@ -93,15 +93,15 @@
       {
         "action": "FILE_REPORT",
         "route": "L2",
-        "reason": "3a: confirmed/strongly suspected + exposure>1000"
+        "reason": "3a/R6: linked to shared device/region/another fraud"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
   },
   "sar": {
     "file": true,
-    "reason": "3a: confirmed/strongly suspected + exposure>1000",
-    "narrative": "Card C10434-K1 (customer C10434): account_takeover episode of 4 txns totaling $1308.06 around 2016-12-02, flagged txn 3506725 ($1000.03, online). Device profile 'desktop | Windows | Windows 10 | edge 16.0 | 1366x768' shared with 10 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a: confirmed/strongly suspected + exposure>1000.",
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C10434-K1 (customer C10434): account_takeover episode of 0 txns totaling $0.0 around 2016-12-02, flagged txn 3506725 ($1000.03, online). Device profile 'desktop | Windows | Windows 10 | edge 16.0 | 1366x768' shared with 10 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
     "subjects": [
       "C10434",
       "C10434-K1",
@@ -109,7 +109,7 @@
       "C01982",
       "C03019"
     ],
-    "total_amount_usd": 1308.06,
+    "total_amount_usd": 0.0,
     "activity_dates": [
       "2016-12-02",
       "2016-12-02"

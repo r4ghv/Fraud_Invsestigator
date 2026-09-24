@@ -4,18 +4,15 @@
     "status": "closed_fraud",
     "verdict": "fraud",
     "fraud_probability": 0.9,
-    "pattern": "card_not_present_new_device",
+    "pattern": "none",
     "pattern_description": "",
     "affected_txn_ids": [
-      "3543650",
-      "3546062",
-      "3546516",
-      "3548781"
+      "3491361"
     ],
-    "first_suspicious_txn_id": "3543650",
+    "first_suspicious_txn_id": "3491361",
     "connected_card_ids": [],
     "connected_device_profiles": [],
-    "exposure_usd": 529.94,
+    "exposure_usd": 39.08,
     "evidence": [
       {
         "claim": "Flagged txn 3491361 $39.08 in_person region 126.0, risk 0.5",
@@ -26,14 +23,11 @@
         ]
       },
       {
-        "claim": "Card window: 3535 txns for C02354 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "claim": "Card window: 3535 txns for C02354 in \u00b160d; pattern=none conf=0.2",
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
-          "3543650",
-          "3546062",
-          "3546516",
-          "3548781"
+          "3491361"
         ]
       },
       {
@@ -44,11 +38,11 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5564",
-      "CC-5556",
-      "CC-5541"
+      "CC-5558",
+      "CC-5557",
+      "CC-5553"
     ],
-    "summary": "card_not_present_new_device fraud p=0.9; 3535-txn window, device shared with 0 others; trigger customer_report.",
+    "summary": "none fraud p=0.9; 3535-txn window, device shared with 0 others; trigger customer_report.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
@@ -62,14 +56,19 @@
   "next_best_actions": {
     "initial": [
       {
-        "action": "MONITOR_CARD",
+        "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R4: watch pending low-confidence alert"
+        "reason": "R1: single weak signal, verify before block"
+      },
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: verify before block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "3a: probability >= 0.30"
+        "reason": "3a: probability >= 0.30 / evidence requested"
       }
     ],
     "final": [
@@ -97,5 +96,5 @@
   "stop_reason": "verification response settled the question",
   "tool_calls": 54,
   "tokens": 0,
-  "latency_s": 0.6
+  "latency_s": 0.2
 }

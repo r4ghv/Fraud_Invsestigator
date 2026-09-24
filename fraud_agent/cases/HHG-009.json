@@ -6,8 +6,10 @@
     "fraud_probability": 0.9,
     "pattern": "none",
     "pattern_description": "",
-    "affected_txn_ids": [],
-    "first_suspicious_txn_id": "",
+    "affected_txn_ids": [
+      "3581141"
+    ],
+    "first_suspicious_txn_id": "3581141",
     "connected_card_ids": [],
     "connected_device_profiles": [
       "desktop"

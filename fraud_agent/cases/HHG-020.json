@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "desktop | Trident/7.0 | Windows 10 | ie 11.0 for desktop | 1920x1080"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3509359 $125.08 online region 264.0, risk 0.52",

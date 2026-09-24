@@ -3,8 +3,8 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.29,
-    "pattern": "none",
+    "fraud_probability": 0.67,
+    "pattern": "account_takeover",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "mobile | SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3478561 $74.96 online region 191.0, risk 0.5",
@@ -23,10 +23,13 @@
         ]
       },
       {
-        "claim": "Card window: 46 txns for C13487 in \u00b160d; pattern=none conf=0.1",
+        "claim": "Card window: 46 txns for C13487 in \u00b160d; pattern=account_takeover conf=0.75",
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
+          "3460634",
+          "3462636",
+          "3477218",
           "3478561"
         ]
       },
@@ -44,11 +47,11 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5558",
-      "CC-5557",
-      "CC-5553"
+      "CC-5563",
+      "CC-5562",
+      "CC-5559"
     ],
-    "summary": "none uncertain p=0.29; 46-txn window, device shared with 10 others; trigger analyst_request.",
+    "summary": "account_takeover uncertain p=0.67; 46-txn window, device shared with 10 others; trigger analyst_request.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
@@ -92,17 +95,31 @@
         "action": "ESCALATE_TO_ANALYST",
         "route": "auto",
         "reason": "R8: uncertain + conflicting/single signal"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "3a/R6: linked to shared device/region/another fraud"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
   },
   "sar": {
-    "file": false,
-    "reason": "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8",
-    "narrative": "",
-    "subjects": [],
-    "total_amount_usd": 0,
-    "activity_dates": []
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C13487-K1 (customer C13487): account_takeover episode of 0 txns totaling $0.0 around 2016-11-22, flagged txn 3478561 ($74.96, online). Device profile 'mobile | SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080' shared with 10 other customer(s). Trigger: analyst_request. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C13487",
+      "C13487-K1",
+      "C03744",
+      "C09354",
+      "C12033"
+    ],
+    "total_amount_usd": 0.0,
+    "activity_dates": [
+      "2016-11-22",
+      "2016-11-22"
+    ]
   },
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 42,

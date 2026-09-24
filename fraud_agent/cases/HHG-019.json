@@ -3,8 +3,8 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.79,
-    "pattern": "card_not_present_new_device",
+    "fraud_probability": 0.41,
+    "pattern": "none",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "desktop | Windows | other | chrome 61.0 | 1280x720"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3503878 $99.92 online region 264.0, risk 0.9",
@@ -23,13 +23,11 @@
         ]
       },
       {
-        "claim": "Card window: 108 txns for C07987 in \u00b160d; pattern=card_not_present_new_device conf=0.75",
+        "claim": "Card window: 108 txns for C07987 in \u00b160d; pattern=none conf=0.1",
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
-          "3453539",
-          "3456149",
-          "3458424"
+          "3503878"
         ]
       },
       {
@@ -45,73 +43,65 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5564",
-      "CC-5556",
-      "CC-5541"
+      "CC-5558",
+      "CC-5557",
+      "CC-5553"
     ],
-    "summary": "card_not_present_new_device uncertain p=0.79; 108-txn window, device shared with 4 others; trigger risk_score.",
+    "summary": "none uncertain p=0.41; 108-txn window, device shared with 4 others; trigger risk_score.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
-  "evidence_requests": [],
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Assumed no reply within 24h (R4) \u2014 no data provided"
+    }
+  ],
   "next_best_actions": {
     "initial": [
       {
-        "action": "DECLINE_TRANSACTION",
-        "route": "L1",
-        "reason": "R5/R2: strong pattern signal"
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: single weak signal, verify before block"
+      },
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: verify before block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "3a: probability >= 0.30"
+        "reason": "3a: probability >= 0.30 / evidence requested"
       }
     ],
     "final": [
       {
-        "action": "VERIFY_WITH_CUSTOMER",
+        "action": "MONITOR_CARD",
         "route": "auto",
-        "reason": "R1: confirm before block"
+        "reason": "R4: no reply, monitor pending"
       },
       {
         "action": "DECLINE_TRANSACTION",
         "route": "L1",
-        "reason": "strong card_not_present_new_device signal p=0.79"
-      },
-      {
-        "action": "CREATE_CASE",
-        "route": "auto",
-        "reason": "3a: probability >= 0.30"
+        "reason": "R4: no reply on pending auth"
       },
       {
         "action": "ESCALATE_TO_ANALYST",
         "route": "auto",
-        "reason": "R8: uncertain, exposed or conflicting"
-      },
-      {
-        "action": "FILE_REPORT",
-        "route": "L2",
-        "reason": "3a/R6: linked to shared device/region/another fraud"
+        "reason": "R8: uncertain + conflicting/single signal"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
   },
   "sar": {
-    "file": true,
-    "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Card C07987-K2 (customer C07987): card_not_present_new_device episode of 3 txns totaling $500.01 around 2016-12-01, flagged txn 3503878 ($99.92, online). Device profile 'desktop | Windows | other | chrome 61.0 | 1280x720' shared with 4 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
-    "subjects": [
-      "C07987",
-      "C07987-K2",
-      "C01983",
-      "C11309",
-      "C01104"
-    ],
-    "total_amount_usd": 500.01,
-    "activity_dates": [
-      "2016-12-01",
-      "2016-12-01"
-    ]
+    "file": false,
+    "reason": "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
   },
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 57,

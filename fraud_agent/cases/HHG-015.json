@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "desktop | Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3464869 $599.94 online region 327.0, risk 0.77",
@@ -27,10 +27,10 @@
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
-          "3563052",
-          "3563095",
-          "3579474",
-          "3579649"
+          "3462385",
+          "3462387",
+          "3462404",
+          "3464869"
         ]
       },
       {
@@ -101,7 +101,7 @@
   "sar": {
     "file": true,
     "reason": "3a/R6: linked to shared device/region/another fraud",
-    "narrative": "Card C03042-K1 (customer C03042): account_takeover episode of 4 txns totaling $598.54 around 2016-11-17, flagged txn 3464869 ($599.94, online). Device profile 'desktop | Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050' shared with 7 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "narrative": "Card C03042-K1 (customer C03042): account_takeover episode of 0 txns totaling $0.0 around 2016-11-17, flagged txn 3464869 ($599.94, online). Device profile 'desktop | Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050' shared with 7 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
     "subjects": [
       "C03042",
       "C03042-K1",
@@ -109,7 +109,7 @@
       "C11227",
       "C02881"
     ],
-    "total_amount_usd": 598.54,
+    "total_amount_usd": 0.0,
     "activity_dates": [
       "2016-11-17",
       "2016-11-17"
@@ -118,5 +118,5 @@
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 45,
   "tokens": 0,
-  "latency_s": 0.2
+  "latency_s": 0.3
 }

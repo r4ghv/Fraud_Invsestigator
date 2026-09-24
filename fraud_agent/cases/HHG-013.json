@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "desktop | Windows | chrome 66.0"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3526826 $35.66 online region , risk 0.76",

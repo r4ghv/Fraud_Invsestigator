@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "mobile | iOS Device | iOS 9.3.5 | mobile safari 9.0 | 1024x768"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3523199 $100.07 online region 330.0, risk 0.54",

@@ -3,14 +3,14 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.69,
-    "pattern": "card_not_present_new_device",
+    "fraud_probability": 0.38,
+    "pattern": "none",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
     "connected_card_ids": [],
     "connected_device_profiles": [],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3478782 $292.36 online region , risk 0.79",
@@ -21,14 +21,11 @@
         ]
       },
       {
-        "claim": "Card window: 27 txns for C11891 in \u00b160d; pattern=card_not_present_new_device conf=0.65",
+        "claim": "Card window: 27 txns for C11891 in \u00b160d; pattern=none conf=0.1",
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
-          "3307219",
-          "3307244",
-          "3307245",
-          "3311844"
+          "3478782"
         ]
       },
       {
@@ -39,41 +36,57 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5564",
-      "CC-5556",
-      "CC-5541"
+      "CC-5558",
+      "CC-5557",
+      "CC-5553"
     ],
-    "summary": "card_not_present_new_device uncertain p=0.69; 27-txn window, device shared with 0 others; trigger risk_score.",
+    "summary": "none uncertain p=0.38; 27-txn window, device shared with 0 others; trigger risk_score.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
-  "evidence_requests": [],
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Assumed no reply within 24h (R4) \u2014 no data provided"
+    }
+  ],
   "next_best_actions": {
     "initial": [
       {
-        "action": "MONITOR_CARD",
+        "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R4: watch pending low-confidence alert"
+        "reason": "R1: single weak signal, verify before block"
+      },
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: verify before block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "3a: probability >= 0.30"
+        "reason": "3a: probability >= 0.30 / evidence requested"
       }
     ],
     "final": [
       {
         "action": "MONITOR_CARD",
         "route": "auto",
-        "reason": "R4: watch pending low-confidence alert"
+        "reason": "R4: no reply, monitor pending"
       },
       {
-        "action": "CREATE_CASE",
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R4: no reply on pending auth"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
         "route": "auto",
-        "reason": "3a: probability >= 0.30"
+        "reason": "R8: uncertain + conflicting/single signal"
       }
     ],
-    "what_changed": "nothing"
+    "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
   },
   "sar": {
     "file": false,

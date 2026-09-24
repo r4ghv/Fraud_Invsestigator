@@ -3,14 +3,14 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.67,
+    "fraud_probability": 0.32,
     "pattern": "none",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
     "connected_card_ids": [],
     "connected_device_profiles": [],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3514030 $77.07 in_person region 444.0, risk 0.61",
@@ -40,7 +40,7 @@
       "CC-5557",
       "CC-5553"
     ],
-    "summary": "none uncertain p=0.67; 179-txn window, device shared with 0 others; trigger risk_score.",
+    "summary": "none uncertain p=0.32; 179-txn window, device shared with 0 others; trigger risk_score.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
@@ -99,5 +99,5 @@
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 3,
   "tokens": 0,
-  "latency_s": 25.9
+  "latency_s": 25.2
 }

@@ -3,8 +3,8 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.31,
-    "pattern": "none",
+    "fraud_probability": 0.7,
+    "pattern": "account_takeover",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
@@ -12,7 +12,7 @@
     "connected_device_profiles": [
       "desktop | Windows | Windows 10 | chrome 65.0 | 1920x1080"
     ],
-    "exposure_usd": 0,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged txn 3450629 $100.09 online region 204.0, risk 0.57",
@@ -23,10 +23,13 @@
         ]
       },
       {
-        "claim": "Card window: 19 txns for C04570 in \u00b160d; pattern=none conf=0.1",
+        "claim": "Card window: 19 txns for C04570 in \u00b160d; pattern=account_takeover conf=0.75",
         "source": "graph",
         "ref": "query:card_window",
         "entity_ids": [
+          "3403833",
+          "3450436",
+          "3450503",
           "3450629"
         ]
       },
@@ -44,65 +47,73 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-5558",
-      "CC-5557",
-      "CC-5553"
+      "CC-5563",
+      "CC-5562",
+      "CC-5559"
     ],
-    "summary": "none uncertain p=0.31; 19-txn window, device shared with 10 others; trigger risk_score.",
+    "summary": "account_takeover uncertain p=0.7; 19-txn window, device shared with 10 others; trigger risk_score.",
     "written_to_graph": false,
     "graph_case_id": ""
   },
-  "evidence_requests": [
-    {
-      "type": "customer_validation",
-      "asked_after_step": 3,
-      "assumed_response": "Assumed no reply within 24h (R4) \u2014 no data provided"
-    }
-  ],
+  "evidence_requests": [],
   "next_best_actions": {
     "initial": [
       {
-        "action": "VERIFY_WITH_CUSTOMER",
-        "route": "auto",
-        "reason": "R1: single weak signal, verify before block"
-      },
-      {
-        "action": "STEP_UP_AUTH",
-        "route": "auto",
-        "reason": "R1: verify before block"
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R5/R2: strong pattern signal"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "3a: probability >= 0.30 / evidence requested"
+        "reason": "3a: probability >= 0.30"
       }
     ],
     "final": [
       {
-        "action": "MONITOR_CARD",
+        "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R4: no reply, monitor pending"
+        "reason": "R1: confirm before block"
       },
       {
         "action": "DECLINE_TRANSACTION",
         "route": "L1",
-        "reason": "R4: no reply on pending auth"
+        "reason": "strong account_takeover signal p=0.7"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "3a: probability >= 0.30"
       },
       {
         "action": "ESCALATE_TO_ANALYST",
         "route": "auto",
-        "reason": "R8: uncertain + conflicting/single signal"
+        "reason": "R8: uncertain, exposed or conflicting"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "3a/R6: linked to shared device/region/another fraud"
       }
     ],
     "what_changed": "evidence assumption updated probability and actions per R2/R4/R8"
   },
   "sar": {
-    "file": false,
-    "reason": "3a: uncertain without exposure/shared/coordinated -> case only, escalate per R8",
-    "narrative": "",
-    "subjects": [],
-    "total_amount_usd": 0,
-    "activity_dates": []
+    "file": true,
+    "reason": "3a/R6: linked to shared device/region/another fraud",
+    "narrative": "Card C04570-K1 (customer C04570): account_takeover episode of 0 txns totaling $0.0 around 2016-11-11, flagged txn 3450629 ($100.09, online). Device profile 'desktop | Windows | Windows 10 | chrome 65.0 | 1920x1080' shared with 10 other customer(s). Trigger: risk_score. Customer denial assumed from report; sequence inconsistent with history. Suspicious per 3a/R6: linked to shared device/region/another fraud.",
+    "subjects": [
+      "C04570",
+      "C04570-K1",
+      "C11965",
+      "C08662",
+      "C05704"
+    ],
+    "total_amount_usd": 0.0,
+    "activity_dates": [
+      "2016-11-11",
+      "2016-11-11"
+    ]
   },
   "stop_reason": "uncertain single-signal case escalated per R8; further graph steps unlikely to change decision",
   "tool_calls": 51,
