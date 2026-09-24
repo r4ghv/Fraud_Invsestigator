@@ -1,32 +1,25 @@
-// Paste into the GSQL editor and run. Then upload the 3 CSVs when the job asks.
-// Card vertex uses customer_id as id (case K-suffixes are case-level; see agent README).
-
-USE GRAPH Fraud
-
 CREATE LOADING JOB load_fraud FOR GRAPH Fraud {
   DEFINE FILENAME txn_file;
   DEFINE FILENAME ident_file;
   DEFINE FILENAME cc_file;
 
-  // --- transactions_graph.csv (20 cols, header=true) ---
-  LOAD txn_file TO VERTEX Customer VALUES ($"customer_id", " ") USING header="true", separator=",";
-  LOAD txn_file TO VERTEX Card VALUES ($"customer_id", $"customer_id") USING header="true", separator=",";
-  LOAD txn_file TO VERTEX Txn VALUES ($"TransactionID", $"TransactionAmt", $"ts", $"channel", $"ProductCD", $"addr1", $"risk_score")
-    USING header="true", separator=",";
-  LOAD txn_file TO VERTEX BillingRegion VALUES ($"addr1") USING header="true", separator=",";
-  LOAD txn_file TO EDGE OWNS VALUES ($"customer_id", $"customer_id") USING header="true", separator=",";
-  LOAD txn_file TO EDGE MADE VALUES ($"customer_id", $"TransactionID") USING header="true", separator=",";
-  LOAD txn_file TO EDGE BILLED_IN VALUES ($"TransactionID", $"addr1") USING header="true", separator=",";
+  LOAD txn_file TO VERTEX Customer VALUES ($0, "") USING header="false", separator=",";
+  LOAD txn_file TO VERTEX Card VALUES ($16, $16) USING header="false", separator=",";
+  LOAD txn_file TO VERTEX Txn VALUES ($0, $2, $17, $18, $3, $10, $19)
+    USING header="false", separator=",";
+  LOAD txn_file TO VERTEX BillingRegion VALUES ($10) USING header="false", separator=",";
+  LOAD txn_file TO EDGE OWNS VALUES ($16, $16) USING header="false", separator=",";
+  LOAD txn_file TO EDGE MADE VALUES ($16, $0) USING header="false", separator=",";
+  LOAD txn_file TO EDGE BILLED_IN VALUES ($0, $10) USING header="false", separator=",";
 
-  // --- identity.csv (online txns; DeviceInfo empty rows are skipped by the loader) ---
-  LOAD ident_file TO VERTEX DeviceProfile VALUES ($"DeviceInfo", $"DeviceInfo", $"id_30", $"id_31", $"id_33")
-    USING header="true", separator=",";
-  LOAD ident_file TO EDGE FROM_DEVICE VALUES ($"TransactionID", $"DeviceInfo") USING header="true", separator=",";
+  LOAD ident_file TO VERTEX DeviceProfile VALUES ($40, $40, $30, $31, $33)
+    USING header="false", separator=",";
+  LOAD ident_file TO EDGE FROM_DEVICE VALUES ($0, $40) USING header="false", separator=",";
 
-  // --- closed_cases_history.csv (memory; pipe-separated txn lists stay in the CSV for the agent) ---
-  LOAD cc_file TO VERTEX ClosedCase VALUES ($"case_id", $"outcome", $"pattern", $"exposure_usd", $"analyst_notes")
-    USING header="true", separator=",";
-  LOAD cc_file TO VERTEX Card VALUES ($"card_id", $"customer_id") USING header="true", separator=",";
-  LOAD cc_file TO EDGE OWNS VALUES ($"customer_id", $"card_id") USING header="true", separator=",";
-  LOAD cc_file TO EDGE ON_CARD VALUES ($"case_id", $"card_id") USING header="true", separator=",";
+  LOAD cc_file TO VERTEX ClosedCase VALUES ($0, $5, $6, $10, $14)
+    USING header="false", separator=",";
+  LOAD cc_file TO VERTEX Card VALUES ($3, $2) USING header="false", separator=",";
+  LOAD cc_file TO VERTEX Customer VALUES ($2, "") USING header="false", separator=",";
+  LOAD cc_file TO EDGE OWNS VALUES ($2, $3) USING header="false", separator=",";
+  LOAD cc_file TO EDGE ON_CARD VALUES ($0, $3) USING header="false", separator=",";
 }
